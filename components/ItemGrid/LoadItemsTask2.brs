@@ -73,6 +73,8 @@ sub loadItems()
                 tmp = CreateObject("roSGNode", "FolderData")
             else if item.Type = "Video"
                 tmp = CreateObject("roSGNode", "VideoData")
+            else if item.Type = "MusicArtist"
+                tmp = CreateObject("roSGNode", "MusicArtistData")
             else
                 print "[LoadItems] Unknown Type: " item.Type
             end if
