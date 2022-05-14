@@ -118,20 +118,19 @@ function ItemMetaData(id as string)
         tmp.json = data
         return tmp
     else if data.type = "MusicArtist"
+        ' User clicked on an artist and wants to see the list of their albums
         tmp = CreateObject("roSGNode", "MusicArtistData")
         tmp.image = PosterImage(data.id)
         tmp.json = data
         return tmp
     else if data.type = "MusicAlbum"
-        tmp = CreateObject("roSGNode", "MusicAlbumData")
+        ' User clicked on an album and wants to see the list of songs
+        tmp = CreateObject("roSGNode", "MusicAlbumSongListData")
         tmp.image = PosterImage(data.id)
         tmp.json = data
         return tmp
     else if data.type = "Audio"
-        tmp = CreateObject("roSGNode", "MusicAlbumData")
-        tmp.image = PosterImage(data.id)
-        tmp.json = data
-        return tmp
+
     else
         print "Items.brs::ItemMetaData processed unhandled type: " data.type
         ' Return json if we don't know what it is
@@ -139,8 +138,8 @@ function ItemMetaData(id as string)
     end if
 end function
 
-' Music Albums Belonging to an Artist
-function MusicAlbums(id as string)
+' Get list of albums belonging to an artist
+function MusicAlbumList(id as string)
     url = Substitute("Users/{0}/Items", get_setting("active_user"), id)
     resp = APIRequest(url, { 
         "UserId": get_setting("active_user"),
@@ -152,7 +151,7 @@ function MusicAlbums(id as string)
     data = getJson(resp)
     results = []
     for each item in data.Items
-        tmp = CreateObject("roSGNode", "TVEpisodeData")
+        tmp = CreateObject("roSGNode", "MusicAlbumData")
         tmp.image = PosterImage(item.id)
         tmp.json = item
         results.push(tmp)
@@ -161,8 +160,8 @@ function MusicAlbums(id as string)
     return data
 end function
 
-' Music Songs on a Specified Album
-function MusicSongs(id as string)
+' Get Songs that are on an Album
+function MusicSongList(id as string)
     url = Substitute("Users/{0}/Items", get_setting("active_user"), id)
     resp = APIRequest(url, { 
         "UserId": get_setting("active_user"),
@@ -174,7 +173,7 @@ function MusicSongs(id as string)
     data = getJson(resp)
     results = []
     for each item in data.Items
-        tmp = CreateObject("roSGNode", "TVEpisodeData")
+        tmp = CreateObject("roSGNode", "MusicSongData")
         tmp.image = PosterImage(item.id)
         tmp.json = item
         results.push(tmp)
