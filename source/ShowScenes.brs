@@ -411,7 +411,7 @@ function CreateVideoPlayerGroup(video_id, mediaSourceId = invalid, audio_stream_
 end function
 
 sub controlaudioplay()
-    if (m.audio.state = "finished") 
+    if m.audio.state = "finished"
         m.audio.control = "stop"
         m.audio.control = "none"
     end if
@@ -420,7 +420,7 @@ end sub
 ' Play Audio
 function CreateAudioPlayerGroup(audio)
     print "[INFO] Playing ", audio.title
-    
+
     songData = AudioItem(audio.id)
 
     m.audio = createObject("RoSGNode", "Audio")
