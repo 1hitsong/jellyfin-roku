@@ -53,10 +53,22 @@ sub loadItems()
         url = Substitute("Users/{0}/Items/", get_setting("active_user"))
     end if
     resp = APIRequest(url, params)
-    data = getJson(resp)
+    data = getJson(resp)    
+
     if data <> invalid
 
         if data.TotalRecordCount <> invalid then m.top.totalRecordCount = data.TotalRecordCount
+
+        ' When loading a collection, if no results are found, try searching by fallback type
+        if data.TotalRecordCount = 0
+            if m.top.FallbackType <> ""
+                ' Ensure we didn't just search by the fallback type - prevent infinite loop
+                if m.top.ItemType <> m.top.FallbackType
+                    m.top.ItemType = m.top.FallbackType
+                    loadItems()
+                end if
+            end if
+        end if
 
         for each item in data.Items
             tmp = invalid
@@ -72,6 +84,10 @@ sub loadItems()
                 tmp = CreateObject("roSGNode", "FolderData")
             else if item.Type = "Video"
                 tmp = CreateObject("roSGNode", "VideoData")
+            else if item.Type = "MusicArtist" or item.Type = "MusicAlbum"
+                tmp = CreateObject("roSGNode", "MusicArtistData")
+            else if item.Type = "Audio"
+                tmp = CreateObject("roSGNode", "MusicSongData")
             else
                 print "[LoadItems] Unknown Type: " item.Type
             end if

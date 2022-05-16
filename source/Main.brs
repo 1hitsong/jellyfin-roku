@@ -154,6 +154,12 @@ sub Main (args as dynamic) as void
                 end if
             else if selectedItem.type = "Photo"
                 ' Nothing to do here, handled in ItemGrid
+            else if selectedItem.type = "MusicArtist"
+                group = CreateMusicArtistDetailsGroup(selectedItem.json)
+            else if selectedItem.type = "MusicAlbum"
+                group = CreateMusicAlbumDetailsGroup(selectedItem.json)
+            else if selectedItem.type = "Audio"
+                group = CreateAudioPlayerGroup(selectedItem.json)
             else
                 ' TODO - switch on more node types
                 message_dialog(Substitute(tr("{0} support is coming soon!"), selectedItem.type))
@@ -173,6 +179,22 @@ sub Main (args as dynamic) as void
             series = msg.getRoSGNode()
             node = series.seasonData.items[ptr[1]]
             group = CreateSeasonDetailsGroup(series.itemContent, node)
+        else if isNodeEvent(msg, "musicAlbumSelected")
+            ' If you select a Music Album from ANYWHERE, follow this flow
+            ptr = msg.getData()
+            ' ptr is for [row, col] of selected item... but we only have 1 row
+            albums = msg.getRoSGNode()
+            node = albums.musicArtistAlbumData.items[ptr[1]]
+            group = CreateMusicAlbumDetailsGroup(node)
+        else if isNodeEvent(msg, "musicSongSelected")
+            ' If you select a Song from ANYWHERE, follow this flow
+            selectedIndex = msg.getData()
+            songs = msg.getRoSGNode()
+            group = CreateAudioPlayerGroup(songs.MusicArtistAlbumData.items[selectedIndex])
+        else if isNodeEvent(msg, "playAllSelected")
+            ' User selected Play All button
+            songs = msg.getRoSGNode()
+            group = CreateAudioPlayerGroup(songs.MusicArtistAlbumData.items)
         else if isNodeEvent(msg, "episodeSelected")
             ' If you select a TV Episode from ANYWHERE, follow this flow
             node = getMsgPicker(msg, "picker")

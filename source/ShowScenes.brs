@@ -321,6 +321,47 @@ function CreateSeriesDetailsGroup(series)
     return group
 end function
 
+' Shows details on selected artist. Bio, image, and list of available albums
+function CreateMusicArtistDetailsGroup(musicartist)
+    musicData = MusicAlbumList(musicartist.id)
+
+    ' User could have albums or just songs under artists
+    if musicData = invalid or musicData.Items.Count() = 0
+        ' Just songs under artists...
+        group = CreateObject("roSGNode", "MusicAlbumDetails")
+        group.itemContent = ItemMetaData(musicartist.id)
+        group.musicArtistAlbumData = MusicSongList(musicartist.id)
+        group.observeField("musicSongSelected", m.port)
+    else
+        ' Albums...
+        group = CreateObject("roSGNode", "MusicArtistDetails")
+        group.itemContent = ItemMetaData(musicartist.id)
+        group.musicArtistAlbumData = musicData
+        group.observeField("musicAlbumSelected", m.port)
+    end if
+
+    m.global.sceneManager.callFunc("pushScene", group)
+
+    return group
+end function
+
+' Shows details on selected album. Description text, image, and list of available songs
+function CreateMusicAlbumDetailsGroup(album)
+    group = CreateObject("roSGNode", "MusicAlbumDetails")
+    m.global.sceneManager.callFunc("pushScene", group)
+
+    group.itemContent = ItemMetaData(album.id)
+    group.musicArtistAlbumData = MusicSongList(album.id)
+
+    ' Watch for user clicking on a song
+    group.observeField("musicSongSelected", m.port)
+
+    ' Watch for user click on Play button on album
+    group.observeField("playAllSelected", m.port)
+
+    return group
+end function
+
 function CreateSeasonDetailsGroup(series, season)
     group = CreateObject("roSGNode", "TVEpisodes")
     group.optionsAvailable = false
@@ -370,6 +411,74 @@ function CreateVideoPlayerGroup(video_id, mediaSourceId = invalid, audio_stream_
     video.observeField("state", m.port)
 
     return video
+end function
+
+' Play Audio
+function CreateAudioPlayerGroup(audiodata)
+
+    if type(audiodata) = "roArray"
+        ' Passed data is an array of audio, setup playback as a playlist
+
+        m.audio = createObject("RoSGNode", "Audio")
+        m.audio.contentIsPlaylist = true
+
+        audioPlaylistContent = createObject("RoSGNode", "ContentNode")
+
+        for each song in audiodata
+            songContent = audioPlaylistContent.CreateChild("ContentNode")
+            songData = AudioItem(song.id)
+
+            params = {}
+
+            params.append({
+                "Static": "true",
+                "Container": songData.mediaSources[0].container,
+            })
+
+            params.MediaSourceId = songData.mediaSources[0].id
+
+            songContent.url = buildURL(Substitute("Audio/{0}/stream", song.id), params)
+            songContent.title = song.title
+            songContent.streamformat = songData.mediaSources[0].container
+        end for
+
+        m.audio.content = audioPlaylistContent
+
+        m.audio.control = "stop"
+        m.audio.control = "none"
+        m.audio.control = "play"
+
+    else if type(audiodata) = "roSGNode"
+        ' Passed data is a single node
+
+        if audiodata.subtype() = "MusicSongData"
+            ' Passed data is data for a single song, setup playback as a single song
+
+            m.audio = createObject("RoSGNode", "Audio")
+            m.audio.content = createObject("RoSGNode", "ContentNode")
+
+            songData = AudioItem(audiodata.id)
+
+            params = {}
+
+            params.append({
+                "Static": "true",
+                "Container": songData.mediaSources[0].container,
+            })
+
+            params.MediaSourceId = songData.mediaSources[0].id
+
+            m.audio.content.url = buildURL(Substitute("Audio/{0}/stream", audiodata.id), params)
+            m.audio.content.title = audiodata.title
+            m.audio.content.streamformat = songData.mediaSources[0].container
+
+            m.audio.control = "stop"
+            m.audio.control = "none"
+            m.audio.control = "play"
+        end if
+    end if
+
+    return ""
 end function
 
 function CreatePersonView(personData as object) as object
