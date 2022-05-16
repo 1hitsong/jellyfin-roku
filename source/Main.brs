@@ -124,7 +124,7 @@ sub Main (args as dynamic) as void
                 end if
             else if selectedItem.type = "Series"
                 group = CreateSeriesDetailsGroup(selectedItem.json)
-            else if selectedItem.type = "Movie"
+            else if selectedItem.type = "Movie" or selectedItem.type = "AudioBook" or selectedItem.type = "Book"
                 ' open movie detail page
                 group = CreateMovieDetailsGroup(selectedItem)
             else if selectedItem.type = "Person"
