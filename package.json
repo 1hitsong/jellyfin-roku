@@ -9,7 +9,8 @@
   "devDependencies": {
     "@rokucommunity/bslint": "0.7.2",
     "brighterscript": "0.54.1",
-    "rooibos-cli": "1.4.0"
+    "rooibos-cli": "1.4.0",
+    "ropm": "^0.10.6"
   },
   "scripts": {
     "validate": "npx bsc --copy-to-staging=false --create-package=false",
