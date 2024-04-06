@@ -4,7 +4,6 @@ sub init()
     m.top.id = "overhang"
     m.top.translation = [54, 0]
 
-    m.leftGroup = m.top.findNode("overlayLeftGroup")
     m.rightGroup = m.top.findNode("overlayRightGroup")
     ' set font sizes
     m.optionText = m.top.findNode("overlayOptionsText")
@@ -12,7 +11,6 @@ sub init()
     m.optionStar = m.top.findNode("overlayOptionsStar")
     m.optionStar.font.size = 58
     ' save node references
-    m.title = m.top.findNode("overlayTitle")
     m.overlayRightGroup = m.top.findNode("overlayRightGroup")
     m.slideDownAnimation = m.top.findNode("slideDown")
     m.slideUpAnimation = m.top.findNode("slideUp")
@@ -31,10 +29,6 @@ sub onVisibleChange()
     m.slideUpAnimation.control = "start"
 end sub
 
-sub updateTitle()
-    m.title.text = m.top.title
-end sub
-
 sub updateUser()
     user = m.top.findNode("overlayCurrentUser")
     if isValid(user)
@@ -49,25 +43,5 @@ sub updateOptions()
     else
         m.optionText.visible = false
         m.optionStar.visible = false
-    end if
-end sub
-
-' component boolean field isLogoVisibleChange has changed value
-sub isLogoVisibleChange()
-    isLogoVisible = m.top.isLogoVisible
-
-    scene = m.top.getScene()
-    logo = scene.findNode("overlayLogo")
-
-    if isLogoVisible
-        if not isValid(logo)
-            posterLogo = createLogoPoster()
-            m.leftGroup.insertChild(posterLogo, 0)
-        end if
-    else
-        ' remove the logo
-        if isValid(logo)
-            m.leftGroup.removeChild(logo)
-        end if
     end if
 end sub

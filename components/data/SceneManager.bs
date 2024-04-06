@@ -165,16 +165,12 @@ end sub
 ' Register observers for overhang data
 sub registerOverhangData(group)
     if group.isSubType("JFGroup")
-        if group.overhangTitle <> invalid then m.overhang.title = group.overhangTitle
-
         if group.optionsAvailable
             m.overhang.showOptions = true
         else
             m.overhang.showOptions = false
         end if
         group.observeField("optionsAvailable", "updateOptions")
-
-        group.observeField("overhangTitle", "updateOverhangTitle")
 
         if group.overhangVisible
             m.overhang.visible = true
@@ -192,13 +188,11 @@ end sub
 '
 ' Remove observers for overhang data
 sub unregisterOverhangData(group)
-    group.unobserveField("overhangTitle")
 end sub
 
 '
 ' Update overhang title
 sub updateOverhangTitle(msg)
-    m.overhang.title = msg.getData()
 end sub
 
 '
