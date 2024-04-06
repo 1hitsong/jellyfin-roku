@@ -8,8 +8,6 @@ sub init()
     m.log = log.Logger("ItemGrid")
     m.options = m.top.findNode("options")
 
-    m.showItemCount = m.global.session.user.settings["itemgrid.showItemCount"]
-
     m.tvGuide = invalid
     m.channelFocused = invalid
 
@@ -898,7 +896,7 @@ sub updateTitle()
 
     actInt = m.itemGrid.itemFocused + 1
 
-    if m.showItemCount and m.loadItemsTask.totalRecordCount > 0 and m.options.view <> "Genres" and m.view <> "Genres"
+    if m.loadItemsTask.totalRecordCount > 0 and m.options.view <> "Genres" and m.view <> "Genres"
         m.top.overhangTitle += " (" + tr("%1 of %2").Replace("%1", actInt.toStr()).Replace("%2", m.loadItemsTask.totalRecordCount.toStr()) + ")"
     end if
 

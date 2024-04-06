@@ -221,13 +221,6 @@
                 "description": "Settings relating to the appearance of the Home screen and the program in general.",
                 "children": [
                     {
-                        "title": "Hide Clock",
-                        "description": "Hide all clocks in Jellyfin. Jellyfin will need to be closed and reopened for changes to take effect.",
-                        "settingName": "ui.design.hideclock",
-                        "type": "bool",
-                        "default": "false"
-                    },
-                    {
                         "title": "Max Days Next Up",
                         "description": "Set the maximum amount of days a show should stay in the 'Next Up' list without watching it.",
                         "settingName": "ui.details.maxdaysnextup",
@@ -269,13 +262,6 @@
                                 "title": "Grid View Settings",
                                 "description": "Settings that apply when Grid views are enabled.",
                                 "children": [
-                                    {
-                                        "title": "Item Count",
-                                        "description": "Show item count in the library and index of selected item.",
-                                        "settingName": "itemgrid.showItemCount",
-                                        "type": "bool",
-                                        "default": "false"
-                                    },
                                     {
                                         "title": "Item Titles",
                                         "description": "Select when to show titles.",

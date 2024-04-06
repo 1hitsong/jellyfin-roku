@@ -7,20 +7,12 @@
     </LayoutGroup>
     <LayoutGroup id="overlayRightGroup" layoutDirection="horiz" itemSpacings="30" translation="[1766, 53]" horizAlignment="right">
       <Label id="overlayCurrentUser" font="font:MediumSystemFont" width="300" horizAlign="right" vertAlign="center" height="64" />
-      <Rectangle id="overlayRightSeperator" color="#666666" width="2" height="64" visible="false" />
-      <LayoutGroup id="overlayTimeGroup" layoutDirection="horiz" horizAlignment="right" itemSpacings="0">
-        <Label id="overlayHours" font="font:MediumSystemFont" vertAlign="center" height="64" />
-        <Label font="font:MediumSystemFont" text=":" vertAlign="center" height="64" />
-        <Label id="overlayMinutes" font="font:MediumSystemFont" vertAlign="center" height="64" />
-        <Label id="overlayMeridian" font="font:SmallSystemFont" vertAlign="bottom" height="48" />
-      </LayoutGroup>
     </LayoutGroup>
 
     <LayoutGroup layoutDirection="horiz" horizAlignment="right" translation="[1766, 125]" vertAlignment="custom">
       <Label id="overlayOptionsStar" font="font:LargeSystemFont" text="*" />
       <Label id="overlayOptionsText" font="font:SmallSystemFont" text="Options" translation="[0,6]" />
     </LayoutGroup>
-    <Timer id="currentTimeTimer" repeat="true" duration="60" />
 
     <Animation id="slideUp" duration=".5" repeat="false">
       <Vector2DFieldInterpolator key="[0.0, .5]" keyValue="[[0, 0], [0, -200]]" fieldToInterp="overhang.translation" />
