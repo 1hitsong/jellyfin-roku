@@ -5,7 +5,7 @@ import "pkg:/source/utils/deviceCapabilities.bs"
 
 sub init()
     m.isFirstRun = true
-    m.top.overhangTitle = "Home"
+    m.top.overhangTitle = ""
     m.top.optionsAvailable = true
     m.postTask = createObject("roSGNode", "PostTask")
 
@@ -37,7 +37,7 @@ sub OnScreenShown()
     if isValid(overhang)
         overhang.isLogoVisible = true
         overhang.currentUser = m.global.session.user.name
-        overhang.title = tr("Home")
+        overhang.title = ""
     end if
 
     if isValid(m.top.lastFocus)
