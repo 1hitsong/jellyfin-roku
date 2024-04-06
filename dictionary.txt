@@ -1,5 +1,6 @@
 
 Atse
+Jellyfin
 VSCode
 BrighterScript
 BrightScript
