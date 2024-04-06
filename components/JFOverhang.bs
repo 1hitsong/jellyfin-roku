@@ -18,21 +18,18 @@ sub init()
     m.overlayTimeGroup = m.top.findNode("overlayTimeGroup")
     m.slideDownAnimation = m.top.findNode("slideDown")
     m.slideUpAnimation = m.top.findNode("slideUp")
-    ' show clock based on user setting
-    m.hideClock = m.global.session.user.settings["ui.design.hideclock"]
-    if not m.hideClock
-        ' save node references
-        m.overlayHours = m.top.findNode("overlayHours")
-        m.overlayMinutes = m.top.findNode("overlayMinutes")
-        m.overlayMeridian = m.top.findNode("overlayMeridian")
-        m.overlayMeridian.font.size = 20
-        m.currentTimeTimer = m.top.findNode("currentTimeTimer")
-        ' display current time
-        updateTime()
-        ' start timer to update clock every minute
-        m.currentTimeTimer.control = "start"
-        m.currentTimeTimer.ObserveField("fire", "updateTime")
-    end if
+
+    ' save node references
+    m.overlayHours = m.top.findNode("overlayHours")
+    m.overlayMinutes = m.top.findNode("overlayMinutes")
+    m.overlayMeridian = m.top.findNode("overlayMeridian")
+    m.overlayMeridian.font.size = 20
+    m.currentTimeTimer = m.top.findNode("currentTimeTimer")
+    ' display current time
+    updateTime()
+    ' start timer to update clock every minute
+    m.currentTimeTimer.control = "start"
+    m.currentTimeTimer.ObserveField("fire", "updateTime")
 
     setClockVisibility()
 end sub
@@ -55,17 +52,10 @@ sub updateTitle()
 end sub
 
 sub setClockVisibility()
-    if m.hideClock
-        m.overlayRightGroup.removeChild(m.overlayTimeGroup)
-    end if
+    m.overlayRightGroup.removeChild(m.overlayTimeGroup)
 end sub
 
 sub setRightSeperatorVisibility()
-    if m.hideClock
-        m.top.removeChild(m.rightSeperator)
-        return
-    end if
-
     if m.top.currentUser <> ""
         m.rightSeperator.visible = "true"
     else
@@ -91,7 +81,6 @@ sub updateTime()
 end sub
 
 sub resetTime()
-    if m.hideClock then return
     m.currentTimeTimer.control = "stop"
     m.currentTimeTimer.control = "start"
     updateTime()
