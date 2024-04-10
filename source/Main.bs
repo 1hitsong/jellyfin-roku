@@ -27,6 +27,7 @@ sub Main (args as dynamic) as void
     if m.wasMigrated then printRegistry()
 
     m.scene = m.screen.CreateScene("JFScene")
+
     m.screen.show() ' vscode_rale_tracker_entry
 
     playstateTask = CreateObject("roSGNode", "PlaystateTask")
@@ -38,6 +39,9 @@ sub Main (args as dynamic) as void
     m.global.addFields({ app_loaded: false, playstateTask: playstateTask, sceneManager: sceneManager })
     m.global.addFields({ queueManager: CreateObject("roSGNode", "QueueManager") })
     m.global.addFields({ audioPlayer: CreateObject("roSGNode", "AudioPlayer") })
+
+    optionMenu = m.scene.findNode("optionMenu")
+    optionMenu.observeField("optionSelected", m.port)
 
     app_start:
     ' First thing to do is validate the ability to use the API
@@ -782,45 +786,44 @@ sub Main (args as dynamic) as void
                 end if
             end if
         else if isNodeEvent(msg, "optionSelected")
-            button = msg.getRoSGNode()
+            selectedOption = LCase(msg.getData())
+
+            if isValid(optionMenu)
+                optionMenu.callFunc("close")
+            end if
+
             group = sceneManager.callFunc("getActiveScene")
-            if button.id = "goto_search" and isValid(group)
-                ' Exit out of the side panel
-                panel = group.findNode("options")
-                panel.visible = false
-                if isValid(group.lastFocus)
-                    group.lastFocus.setFocus(true)
-                else
-                    group.setFocus(true)
-                end if
+            if selectedOption = "search" and isValid(group)
+                sceneManager.callFunc("clearScenes")
                 group = CreateSearchPage()
                 sceneManager.callFunc("pushScene", group)
                 group.findNode("SearchBox").findNode("search_Key").setFocus(true)
                 group.findNode("SearchBox").findNode("search_Key").active = true
-            else if button.id = "change_server"
+            else if selectedOption = "changeserver"
                 unset_setting("server")
                 session.server.Delete()
                 SignOut(false)
                 sceneManager.callFunc("clearScenes")
                 goto app_start
-            else if button.id = "change_user"
+            else if selectedOption = "changeuser"
                 SignOut(false)
                 sceneManager.callFunc("clearScenes")
                 goto app_start
-            else if button.id = "sign_out"
+            else if selectedOption = "signout"
                 SignOut()
                 sceneManager.callFunc("clearScenes")
                 goto app_start
-            else if button.id = "settings"
-                ' Exit out of the side panel
-                panel = group.findNode("options")
-                panel.visible = false
-                if isValid(group) and isValid(group.lastFocus)
-                    group.lastFocus.setFocus(true)
-                else
-                    group.setFocus(true)
-                end if
+            else if selectedOption = "settings"
+                sceneManager.callFunc("clearScenes")
                 sceneManager.callFunc("settings")
+            else if selectedOption = "home"
+                sceneManager.callFunc("clearScenes")
+                group = CreateHomeGroup()
+                group.callFunc("loadLibraries")
+                stopLoadingSpinner()
+                sceneManager.callFunc("pushScene", group)
+            else if selectedOption = "exit"
+                return
             end if
         else if isNodeEvent(msg, "selectSubtitlePressed")
             node = m.scene.focusedChild
@@ -864,7 +867,6 @@ sub Main (args as dynamic) as void
             event = msg.GetInfo()
 
             if event.exitedScreensaver = true
-                sceneManager.callFunc("resetTime")
                 group = sceneManager.callFunc("getActiveScene")
                 if isValid(group)
                     ' refresh the current view

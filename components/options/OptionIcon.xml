@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="OptionIcon" extends="Group">
+  <children>
+    <Poster id="buttonIcon" translation="[0, 0]" height="32" width="32" />
+    <Label id="buttonText" visible="false" color="#ffffff" font="font:SmallSystemFont" horizAlign="left" translation="[90, 0]" />
+  </children>
+  <interface>
+    <field id="text" type="string" value="" />
+    <field id="icon" type="string" value="" />
+    <field id="selected" type="boolean" value="false" />
+    <field id="focus" type="boolean" onChange="onFocusChanged" />
+    <field id="escape" type="string" value="" />
+    <field id="active" type="boolean" value="false" onChange="onActiveChanged" />
+  </interface>
+</component>

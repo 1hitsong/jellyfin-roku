@@ -1,9 +1,40 @@
 import "pkg:/source/utils/misc.bs"
 
 sub init()
-    m.top.backgroundColor = "#262626" '"#101010"
+    m.top.backgroundColor = "#000509"
     m.top.backgroundURI = ""
+    m.OptionMenuEnabled = false
+
     m.spinner = m.top.findNode("spinner")
+    m.content = m.top.findNode("content")
+    m.optionMenu = m.top.findNode("optionMenu")
+end sub
+
+sub enableOptionMenu()
+    m.OptionMenuEnabled = true
+    m.optionMenu.visible = true
+    m.optionMenu.observeField("exit", "onOptionMenuExit")
+end sub
+
+sub disableOptionMenu()
+    m.OptionMenuEnabled = false
+    m.optionMenu.visible = false
+    m.optionMenu.unobserveField("exit")
+end sub
+
+sub setOptionMenuActive()
+    m.lastFocus = m.content.focusedChild.focusedChild
+
+    m.content.translation = [300, 0]
+    m.optionMenu.active = true
+    m.optionMenu.setFocus(true)
+end sub
+
+sub onOptionMenuExit()
+    if LCase(m.optionMenu.exit) = "right"
+        m.lastFocus.setFocus(true)
+        m.content.translation = [0, 0]
+    end if
 end sub
 
 ' Triggered when the isLoading boolean component field is changed
@@ -29,7 +60,27 @@ end sub
 function onKeyEvent(key as string, press as boolean) as boolean
     if not press then return false
 
+    if key = "left"
+        if m.OptionMenuEnabled
+            setOptionMenuActive()
+        end if
+    end if
+
     if key = "back"
+        ' If there is no previous view and the user presses back, show the option menu.
+        ' If the option menu is already active, exit
+        if m.OptionMenuEnabled
+            sceneCount = m.global.sceneManager.callFunc("getSceneCount")
+            if sceneCount = 1 and not m.optionMenu.active
+                setOptionMenuActive()
+            else
+                m.optionMenu.active = false
+                m.optionMenu.exit = "right"
+            end if
+
+            return true
+        end if
+
         m.global.sceneManager.callFunc("popScene")
         return true
     else if key = "options"

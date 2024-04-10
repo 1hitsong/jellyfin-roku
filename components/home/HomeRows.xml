@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <component name="HomeRows" extends="RowList">
   <interface>
+    <field id="exit" type="string" alwaysNotify="true" />
     <field id="selectedItem" type="node" alwaysNotify="true" />
     <field id="quickPlayNode" type="node" />
     <function name="updateHomeRows" />

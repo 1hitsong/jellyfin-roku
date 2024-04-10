@@ -7,12 +7,17 @@ import "pkg:/source/utils/deviceCapabilities.bs"
 sub init()
     m.top.optionsAvailable = false
     m.searchSelect = m.top.findnode("searchSelect")
+    m.searchBox = m.top.findnode("SearchBox")
     m.searchTask = CreateObject("roSGNode", "SearchTask")
+    m.searchAlphabox = m.top.findNode("search_Key")
+
+    scene = m.top.getScene()
+    optionMenu = scene.findNode("optionMenu")
+    optionMenu.callFunc("setFocused", "search")
 
     'set label text
     m.searchHelpText = m.top.findNode("SearchHelpText")
     m.searchHelpText.text = tr("You can search for Titles, People, Live TV Channels and more")
-
 end sub
 
 sub searchMedias()
@@ -47,17 +52,15 @@ sub loadResults()
         end if
         return
     end if
-    m.searchAlphabox = m.top.findnode("searchResults")
-    m.searchAlphabox.translation = "[470, 85]"
 end sub
 
 function onKeyEvent(key as string, press as boolean) as boolean
-
-    m.searchAlphabox = m.top.findNode("search_Key")
-    if m.searchAlphabox.textEditBox.hasFocus()
-        m.searchAlphabox.textEditBox.translation = "[0, -150]"
-    else
-        m.searchAlphabox.textEditBox.translation = "[0, 0]"
+    if isValid(m.searchAlphabox.textEditBox)
+        if m.searchAlphabox.textEditBox.hasFocus()
+            m.searchAlphabox.textEditBox.translation = "[0, -150]"
+        else
+            m.searchAlphabox.textEditBox.translation = "[0, 0]"
+        end if
     end if
 
     if key = "left" and m.searchSelect.isinFocusChain()

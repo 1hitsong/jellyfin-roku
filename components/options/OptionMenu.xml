@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="OptionMenu" extends="Group">
+    <children>
+        <LayoutGroup id="optionButtons" layoutDirection="vert" itemSpacings="50">
+            <OptionIcon id="search" icon="pkg:/images/icons/search.png" text="Search" />
+            <OptionIcon id="home" icon="pkg:/images/icons/home.png" text="Home" />
+            <OptionIcon id="settings" icon="pkg:/images/icons/settings.png" text="Settings" />
+            <OptionIcon id="changeUser" icon="pkg:/images/icons/changeUser.png" text="Change User" />
+            <OptionIcon id="changeServer" icon="pkg:/images/icons/changeServer.png" text="Change Server" />
+            <OptionIcon id="signout" icon="pkg:/images/icons/signout.png" text="SignOut" />
+        </LayoutGroup>
+        <Label id="exit" text="Exit Atse" translation="[0, 600]" visible="false" />
+    </children>
+    <interface>
+        <field id="optionSelected" type="string" alwaysNotify="true" />
+        <function name="close" />
+        <function name="setFocused" />
+        <field id="active" type="boolean" value="false" onChange="onActiveChange" />
+        <field id="exit" type="string" alwaysNotify="true" />
+    </interface>
+</component>

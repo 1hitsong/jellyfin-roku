@@ -1,0 +1,44 @@
+sub init()
+    m.buttonIcon = m.top.findNode("buttonIcon")
+    m.buttonText = m.top.findNode("buttonText")
+
+    m.top.observeField("icon", "onIconChanged")
+    m.top.observeField("text", "onTextChanged")
+end sub
+
+sub onActiveChanged()
+    m.buttonText.visible = m.top.active
+
+    if not m.top.active
+        m.top.focus = false
+    end if
+end sub
+
+sub onFocusChanged()
+    m.buttonIcon.blendColor = m.top.focus ? "#ff6867" : "#ffffff"
+    m.buttonText.color = m.top.focus ? "#ff6867" : "#ffffff"
+end sub
+
+sub onIconChanged()
+    m.top.unobserveField("icon")
+    m.buttonIcon.uri = m.top.icon
+end sub
+
+sub onTextChanged()
+    m.top.unobserveField("text")
+    m.buttonText.text = m.top.text
+end sub
+
+function onKeyEvent(key as string, press as boolean) as boolean
+    if not press then return false
+
+    if key = "right" and m.top.focus
+        m.top.escape = "right"
+    end if
+
+    if key = "left" and m.top.focus
+        m.top.escape = "left"
+    end if
+
+    return false
+end function

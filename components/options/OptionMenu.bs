@@ -1,0 +1,107 @@
+import "pkg:/source/utils/misc.bs"
+
+enum StatusOpacity
+    Inactive = .5
+    Active = 1.0
+end enum
+
+sub init()
+    m.optionButtons = m.top.findNode("optionButtons")
+    m.exit = m.top.findNode("exit")
+
+    m.exit.font.size = "27"
+
+    m.optionList = m.optionButtons.getChildren(-1, 0)
+    m.itemFocused = 0
+end sub
+
+sub close()
+    m.top.active = false
+    m.top.exit = "right"
+end sub
+
+sub setFocused(focusedID as string)
+    for i = 0 to m.optionList.count() - 1
+        if LCase(m.optionList[i].id) = focusedID
+            m.itemFocused = i
+            changeItemFocused(0)
+            exit for
+        end if
+    end for
+end sub
+
+sub onActiveChange()
+    if not isValidAndNotEmpty(m.optionList) then return
+
+    m.top.opacity = m.top.active ? StatusOpacity.Active : StatusOpacity.Inactive
+    m.exit.visible = m.top.active
+
+    for each button in m.optionList
+        button.active = m.top.active
+    end for
+
+    if m.top.active
+        m.optionList[m.itemFocused].setFocus(true)
+        m.optionList[m.itemFocused].focus = true
+    end if
+end sub
+
+sub changeItemFocused(movementAmount as integer)
+    if m.itemFocused + movementAmount < 0 then end
+
+    if isValid(m.optionList[m.itemFocused])
+        m.optionList[m.itemFocused].setFocus(false)
+        m.optionList[m.itemFocused].focus = false
+    end if
+
+    m.itemFocused += movementAmount
+
+    if m.itemFocused > m.optionList.count() then m.itemFocused = m.optionList.count()
+
+    if m.itemFocused = m.optionList.count()
+        m.exit.setFocus(true)
+        m.exit.color = "#ff6867"
+        return
+    end if
+
+
+    m.exit.setFocus(false)
+    m.exit.color = "#ffffff"
+
+    m.optionList[m.itemFocused].setFocus(true)
+    m.optionList[m.itemFocused].focus = true
+end sub
+
+function onKeyEvent(key as string, press as boolean) as boolean
+    if not press then return false
+
+    if key = "down"
+        changeItemFocused(1)
+        return true
+    end if
+
+    if key = "up"
+        changeItemFocused(-1)
+        return true
+    end if
+
+    if key = "right"
+        close()
+        return true
+    end if
+
+    if key = "OK"
+        if m.optionButtons.isInFocusChain()
+            close()
+            m.top.optionSelected = m.optionList[m.itemFocused].id
+            return true
+        end if
+
+        if m.exit.hasFocus()
+            m.top.optionSelected = "exit"
+            return true
+        end if
+    end if
+
+    return false
+end function

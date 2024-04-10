@@ -39,6 +39,7 @@ sub pushScene(newGroup)
                 currentGroup.callFunc("OnScreenHidden")
             end if
 
+            m.scene.callFunc("disableOptionMenu")
         end if
 
         m.groups.push(newGroup)
@@ -72,6 +73,10 @@ sub pushScene(newGroup)
     end if
 
 end sub
+
+function getSceneCount() as integer
+    return m.groups.count()
+end function
 
 '
 ' Remove the current group and load the last group from the stack
@@ -212,13 +217,6 @@ end sub
 sub updateUser()
     ' Passthrough to overhang
     if m.overhang <> invalid then m.overhang.currentUser = m.top.currentUser
-end sub
-
-'
-' Reset time
-sub resetTime()
-    ' Passthrough to overhang
-    m.overhang.callFunc("resetTime")
 end sub
 
 '
