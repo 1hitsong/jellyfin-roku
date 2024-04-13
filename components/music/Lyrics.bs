@@ -1,0 +1,49 @@
+import "pkg:/source/utils/misc.bs"
+
+sub init()
+    m.dataLoaded = false
+
+    m.previousLine = m.top.findNode("previousLine")
+    m.currentLine = m.top.findNode("currentLine")
+    m.nextLine1 = m.top.findNode("nextLine1")
+    m.nextLine2 = m.top.findNode("nextLine2")
+    m.nextLine3 = m.top.findNode("nextLine3")
+end sub
+
+sub onWidthChange()
+    if m.top.width > 0
+        m.previousLine.width = m.top.width
+        m.currentLine.width = m.top.width
+        m.nextLine1.width = m.top.width
+        m.nextLine2.width = m.top.width
+        m.nextLine3.width = m.top.width
+    end if
+end sub
+
+sub onLyricDataChange()
+    m.dataLoaded = isValidAndNotEmpty(m.top.lyricData)
+end sub
+
+sub onPositionTimeChange()
+    if not m.dataLoaded then return
+
+    position = int(m.top.positionTime) * 10000000&
+
+    for i = m.top.lyricData.lyrics.count() - 1 to 0 step -1
+        if position >= m.top.lyricData.lyrics[i].start
+            if i > 0
+                m.previousLine.text = m.top.lyricData.lyrics[i - 1].text
+            end if
+
+            m.currentLine.text = m.top.lyricData.lyrics[i].text
+
+            for lineIndex = 1 to 3
+                if i < m.top.lyricData.lyrics.count() - lineIndex
+                    m[`nextLine${lineIndex}`].text = m.top.lyricData.lyrics[i + lineIndex].text
+                end if
+            end for
+
+            exit for
+        end if
+    end for
+end sub
