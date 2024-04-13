@@ -2125,6 +2125,11 @@ namespace api
             ' We maxed out params for substitute() so we must manually add the routeformat value
             return buildURL(Substitute("/videos/{0}/{1}/subtitles/{2}/{3}/stream." + routeformat, routeitemid, routemediasourceid, routeindex, routestartpositionticks), params)
         end function
+
+        ' Gets a video HLS stream.
+        function GetHLSStream(id as string, params = {} as object)
+            return buildURL(`/Videos/${id}/master.m3u8`, params)
+        end function
     end namespace
 
     namespace web

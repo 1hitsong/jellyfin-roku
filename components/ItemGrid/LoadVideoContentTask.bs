@@ -366,14 +366,22 @@ sub addVideoContentURL(video, mediaSourceId, audio_stream_idx, fully_external)
             "Static": "true",
             "Container": video.container,
             "PlaySessionId": video.PlaySessionId,
-            "AudioStreamIndex": audio_stream_idx
+            "AudioStreamIndex": audio_stream_idx,
+            "apikey": "5f80dce6dec04210ab41b6154fa9c171"
         }
 
         if mediaSourceId <> ""
             params.MediaSourceId = mediaSourceId
         end if
 
-        video.content.url = buildURL(Substitute("Videos/{0}/stream", video.id), params)
+        video.content.url = api.videos.GetHLSStream(video.id, params)
+        print "URL!", video.content.url
+        video.content.streamformat = "hls"
+        video.content.enableThumbnailTilesDuringLive = true
+
+        print "THIS IS HLS!"
+
+        ' video.content.url = buildURL(Substitute("Videos/{0}/stream", video.id), params)
     end if
 end sub
 
