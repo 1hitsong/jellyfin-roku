@@ -1,0 +1,78 @@
+import "pkg:/source/enums/ColorPalette.bs"
+import "pkg:/source/enums/ItemType.bs"
+import "pkg:/source/enums/KeyCode.bs"
+import "pkg:/source/enums/ResumePopupAction.bs"
+import "pkg:/source/enums/String.bs"
+import "pkg:/source/enums/TaskControl.bs"
+import "pkg:/source/utils/misc.bs"
+
+sub init()
+    renderThreadQueue.AddMessageHandler("changeLibrary", "changeLibraryMessageHandler")
+
+    m.homeContent = m.top.findNode("homeContent")
+end sub
+
+sub changeLibraryMessageHandler(data, _)
+    libraryID = chainLookup(data, "id")
+    if not isValidAndNotEmpty(libraryID) then return
+
+    libraryData = {
+        id: chainLookup(data, "id"),
+        collectionType: chainLookup(data, "collectionType"),
+        name: chainLookup(data, "name")
+    }
+
+    loadLibrary(libraryData)
+end sub
+
+sub loadLibrary(libraryData as object)
+    if isStringEqual(libraryData.collectionType, "home")
+        homeScreen = CreateObject("roSGNode", "HomeScreen")
+        m.homeContent.replaceChild(homeScreen, 0)
+        return
+    end if
+
+    if isStringEqual(libraryData.collectionType, "movies")
+        library = CreateObject("roSGNode", "LibraryScreen")
+        library@.setLibraryItemType(ItemType.MOVIE)
+        library@.setLibraryData(libraryData)
+        m.homeContent.replaceChild(library, 0)
+        return
+    end if
+
+    if isStringEqual(libraryData.collectionType, "tvshows")
+        library = CreateObject("roSGNode", "LibraryScreen")
+        library@.setLibraryItemType(ItemType.SERIES)
+        library@.setLibraryData(libraryData)
+        m.homeContent.replaceChild(library, 0)
+        return
+    end if
+
+    if isStringEqual(libraryData.collectionType, "settings")
+        library = CreateObject("roSGNode", "SettingsScreen")
+        library@.setLibraryData(libraryData)
+        m.homeContent.replaceChild(library, 0)
+        return
+    end if
+end sub
+
+sub setLoading(isLoading as boolean)
+    if isLoading
+        startLoadingSpinner(false)
+        return
+    end if
+
+    stopLoadingSpinner()
+end sub
+
+sub setActive(value as boolean)
+    content = m.homeContent.getChild(0)
+    if isValid(content)
+        content@.setActive(value)
+    end if
+end sub
+
+function onKeyEvent(key as string, press as boolean) as boolean
+    if not press then return false
+    return false
+end function

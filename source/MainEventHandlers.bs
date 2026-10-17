@@ -918,7 +918,7 @@ sub onSelectedItemEvent(msg)
 
             ' TODO - switch on more node types
             stopLoadingSpinner()
-            message_dialog("This type is not yet supported: " + selectedItemType)
+            message_dialog("This type is not yet supported: " + (selectedItemType ?? `invalid`))
         end if
     end if
 end sub
@@ -1889,7 +1889,7 @@ sub updateAlbumTrackFavoriteState(itemID as string, isFavorite as boolean)
     if not isValid(songList) or not isValid(songList.content) then return
 
     for each song in songList.content.getChildren(-1, 0)
-        songID = chainLookupReturn(song, "id", String.EMPTY)
+        songID = chainLookupReturn(song, "id", string.EMPTY)
         if isStringEqual(songID, itemID)
             song.favorite = isFavorite
             song.favoriteStatus = isFavorite ? FavoriteStatus.FAVORITE : FavoriteStatus.NOT_FAVORITE

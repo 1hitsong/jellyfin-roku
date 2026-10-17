@@ -11,7 +11,7 @@ sub init()
 
     m.loadedLibraryID = string.EMPTY
     m.loadItemsTask = createObject("roSGNode", "LoadItemsTask2")
-    m.loadItemsTask.observeField("content", "onLoadItemsTaskContentChange")
+    renderThreadQueue.AddMessageHandler("libraryItemsLoaded", "loadLibrariesMessageHandler")
 end sub
 
 sub setLibraryData(libraryData as object)
@@ -43,9 +43,7 @@ sub loadLibraryData(libraryID)
     m.loadItemsTask.control = TaskControl.RUN
 end sub
 
-sub onLoadItemsTaskContentChange()
-    libraryData = m.loadItemsTask.content
-
+sub loadLibrariesMessageHandler(libraryData, _)
     row = CreateObject("roSGNode", "ContentNode")
     row.appendChildren(libraryData)
 

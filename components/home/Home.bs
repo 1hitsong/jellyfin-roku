@@ -12,13 +12,10 @@ import "pkg:/source/utils/misc.bs"
 
 sub init()
     m.librarySection = m.top.findNode("librarySection")
-    m.libraryItemsSection = m.top.findNode("libraryItemsSection")
-    m.newreleasesSection = m.top.findNode("newreleasesSection")
-    m.recentlyaddedSection = m.top.findNode("recentlyaddedSection")
+    m.homeContent = m.top.findNode("homeContent")
 
     if isValid(m.librarySection)
         m.librarySection@.setActive(true)
-        m.librarySection.observeField("selectedItem", "onLibrarySectionSelectedItemChange")
     end if
 end sub
 
@@ -35,25 +32,6 @@ sub OnScreenShown()
 end sub
 
 sub OnScreenHidden()
-end sub
-
-sub onLibrarySectionSelectedItemChange(msg)
-    data = msg.getData()
-
-    libraryID = chainLookup(data, "id")
-    if not isValidAndNotEmpty(libraryID) then return
-
-    libraryData = {
-        id: chainLookup(data, "id"),
-        name: chainLookup(data, "name")
-    }
-
-    loadLibrary(libraryData)
-end sub
-
-sub loadLibrary(libraryData as object)
-    if not isValid(m.libraryItemsSection) then return
-    m.libraryItemsSection@.setLibraryData(libraryData)
 end sub
 
 function getHomeSection(rootNode as object) as object
@@ -83,47 +61,25 @@ function onKeyEvent(key as string, press as boolean) as boolean
 
     if isStringEqual(key, KeyCode.RIGHT)
         if m.librarySection.isInFocusChain()
-            m.libraryItemsSection@.setActive(true)
-            m.top.lastFocus = m.libraryItemsSection
-            return true
-        end if
-        if m.libraryItemsSection.isInFocusChain()
-            m.newreleasesSection@.setActive(true)
-            m.top.lastFocus = m.newreleasesSection
+            m.librarySection@.setActive(false)
+            m.homeContent@.setActive(true)
+            m.top.lastFocus = m.homeContent
             return true
         end if
     end if
 
     if isStringEqual(key, KeyCode.LEFT)
-        if m.libraryItemsSection.isInFocusChain()
+        if m.homeContent.isInFocusChain()
             m.librarySection@.setActive(true)
             m.top.lastFocus = m.librarySection
             return true
         end if
-        if m.newreleasesSection.isInFocusChain()
-            m.libraryItemsSection@.setActive(true)
-            m.top.lastFocus = m.libraryItemsSection
-            return true
-        end if
-        if m.recentlyaddedSection.isInFocusChain()
-            m.libraryItemsSection@.setActive(true)
-            m.top.lastFocus = m.libraryItemsSection
-            return true
-        end if
     end if
 
-    if isStringEqual(key, KeyCode.DOWN)
-        if m.newreleasesSection.isInFocusChain()
-            m.recentlyaddedSection@.setActive(true)
-            m.top.lastFocus = m.recentlyaddedSection
-            return true
-        end if
-    end if
-
-    if isStringEqual(key, KeyCode.UP)
-        if m.recentlyaddedSection.isInFocusChain()
-            m.newreleasesSection@.setActive(true)
-            m.top.lastFocus = m.newreleasesSection
+    if isStringEqual(key, KeyCode.BACK)
+        if m.homeContent.isInFocusChain()
+            m.librarySection@.setActive(true)
+            m.top.lastFocus = m.librarySection
             return true
         end if
     end if

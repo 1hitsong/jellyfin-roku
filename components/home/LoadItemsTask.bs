@@ -14,12 +14,12 @@ sub init()
     m.top.functionName = "loadItems"
 end sub
 
-function loadLibraries() as object
+sub loadLibraries()
     results = []
 
     data = api.GetUserViews({ "userId": m.global.session.user.id })
 
-    if not isChainValid(data, "items") then return results
+    if not isChainValid(data, "items") then return
 
     listData = loadMyList()
 
@@ -31,6 +31,20 @@ function loadLibraries() as object
             CollectionType: ItemType.MYLIST
         })
     end if
+
+    data.items.unshift({
+        id: `Home`,
+        name: `Home`,
+        Type: `Home`,
+        CollectionType: `Home`
+    })
+
+    data.items.push({
+        id: `Settings`,
+        name: `Settings`,
+        Type: `Settings`,
+        CollectionType: `Settings`
+    })
 
     for each item in data.LookupCI("items")
         tmp = CreateObject("roSGNode", "HomeData")
@@ -46,10 +60,10 @@ function loadLibraries() as object
         results.push(tmp)
     end for
 
-    return results
-end function
+    renderThreadQueue.PostMessage("librariesLoaded", results)
+end sub
 
-function loadRecentlyAddedMedia() as object
+sub loadRecentlyAddedMedia()
     results = []
 
     params = {
@@ -63,7 +77,7 @@ function loadRecentlyAddedMedia() as object
 
     data = api.items.GetLatest(params)
 
-    if not isValidAndNotEmpty(data) then return results
+    if not isValidAndNotEmpty(data) then return
 
     for each item in data
         if not isStringEqual(item.Type, ItemType.BOOK)
@@ -101,8 +115,8 @@ function loadRecentlyAddedMedia() as object
         end if
     end for
 
-    return results
-end function
+    renderThreadQueue.PostMessage("recentlyAddedLoaded", results)
+end sub
 
 function loadLatestMedia() as object
     results = []
@@ -505,7 +519,7 @@ function loadNextUp() as object
     return results
 end function
 
-function loadLatestReleases() as object
+sub loadLatestReleases()
     results = []
 
     params = {
@@ -528,8 +542,8 @@ function loadLatestReleases() as object
         end for
     end if
 
-    return results
-end function
+    renderThreadQueue.PostMessage("newReleasesLoaded", results)
+end sub
 
 ' getFavoriteRowDefinitions: Defines the visible Favorites rows and their Jellyfin query type
 '
@@ -895,7 +909,7 @@ sub loadItems()
     end if
 
     if isStringEqual(m.top.itemsToLoad, "allRecentlyAdded")
-        m.top.content = loadRecentlyAddedMedia()
+        loadRecentlyAddedMedia()
         return
     end if
 
@@ -910,7 +924,7 @@ sub loadItems()
     end if
 
     if isStringEqual(m.top.itemsToLoad, "latestReleases")
-        m.top.content = loadLatestReleases()
+        loadLatestReleases()
         return
     end if
 

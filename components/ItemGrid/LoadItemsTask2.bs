@@ -521,8 +521,6 @@ sub loadItems()
                     tmp.json = item
                     tmp.type = "Folder"
                     tmp.posterUrl = api.items.GetImageURL(item.id, "primary", 0, { "maxHeight": 270, "maxWidth": 270 })
-                else
-                    ' print `Unknown Type ${item.Type}`
                 end if
             end if
 
@@ -540,5 +538,5 @@ sub loadItems()
             end if
         end for
     end if
-    m.top.content = results
+    renderThreadQueue.PostMessage("libraryItemsLoaded", results)
 end sub

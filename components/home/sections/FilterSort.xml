@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="FilterSort" extends="Group">
+  <children>
+    <LayoutGroup
+      layoutDirection="horiz"
+      horizAlignment="right"
+      itemSpacings="[10]">
+      <IconButton
+        id="search"
+        padding="10"
+        icon="pkg:/images/icons/search-light.png"
+        height="40"
+        width="40" />
+      <IconButton
+        id="filter"
+        padding="10"
+        icon="pkg:/images/icons/filter.png"
+        height="40"
+        width="40" />
+      <IconButton
+        id="sort"
+        padding="10"
+        icon="pkg:/images/icons/sort.png"
+        height="40"
+        width="40" />
+    </LayoutGroup>
+    <LibraryFilterDialog
+      inheritParentTransform="false"
+      id="filterDialog"
+      visible="false" />
+    <LibrarySortDialog
+      inheritParentTransform="false"
+      id="sortDialog"
+      visible="false" />
+  </children>
+  <interface>
+    <function name="setActive" />
+    <field id="mediaType" type="string" />
+    <field id="collectionType" type="string" />
+  </interface>
+</component>

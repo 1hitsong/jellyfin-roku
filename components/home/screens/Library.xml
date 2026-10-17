@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<component name="LibraryScreen" extends="HomeSection">
+    <children>
+        <LayoutGroup
+            translation="[0, 10]"
+            layoutDirection="vert"
+            vertAlignment="top"
+            itemSpacings="[10]">
+            <LayoutGroup
+                layoutDirection="horiz"
+                vertAlignment="top"
+                itemSpacings="[0]">
+                <Rectangle
+                    color="0x00000000"
+                    height="1"
+                    width="15" />
+                <HeaderText
+                    id="libraryName"
+                    text="LIBRARY NAME"
+                    width="800" />
+            </LayoutGroup>
+            <LibraryTable
+                id="libraryTable"
+                itemComponentName="MediaListItem"
+                drawFocusFeedback="true"
+                focusFootprintBitmapUri=""
+                itemSpacing="[10, 10]"
+                itemSize="[160, 240]"
+                numRows="4"
+                numColumns="10"
+                vertFocusAnimationStyle="fixedFocus"
+            />
+        </LayoutGroup>
+        <FilterSort
+            id="filterSort"
+            translation="[1700, 0]" />
+    </children>
+    <interface>
+        <function name="setLibraryData" />
+        <function name="setLibraryItemType" />
+        <function name="setActive" />
+    </interface>
+</component>

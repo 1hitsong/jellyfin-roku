@@ -1,13 +1,15 @@
 import "pkg:/source/enums/TaskControl.bs"
+import "pkg:/source/utils/misc.bs"
 
 sub init()
     m.libraryList = m.top.findNode("libraryList")
 
     m.LoadLibrariesTask = createObject("roSGNode", "LoadItemsTask")
-    m.LoadLibrariesTask.observeField("content", "onLoadLibrariesTaskContent")
+    renderThreadQueue.AddMessageHandler("librariesLoaded", "loadLibrariesMessageHandler")
 
     m.keypressTimer = m.top.findNode("keypressTimer")
     m.keypressTimer.observeField("fire", "onKeypressTimerFire")
+    m.lastLoadedItem = 0
 
     loadLibraries()
 end sub
@@ -16,13 +18,9 @@ sub loadLibraries()
     m.LoadLibrariesTask.control = TaskControl.RUN
 end sub
 
-sub onLoadLibrariesTaskContent()
-    m.libraryData = m.LoadLibrariesTask.content
-    m.LoadLibrariesTask.unobserveField("content")
-    m.LoadLibrariesTask.content = []
-
+sub loadLibrariesMessageHandler(libraryData, _)
     row = CreateObject("roSGNode", "ContentNode")
-    row.appendChildren(m.libraryData)
+    row.appendChildren(libraryData)
 
     if isValid(m.libraryList)
         m.libraryList.content = row
@@ -38,11 +36,25 @@ sub onItemFocusedChange()
 end sub
 
 sub onKeypressTimerFire()
-    m.top.selectedItem = m.libraryList.content.getChild(m.libraryList.itemFocused)
+    ' Don't change if we aren't changing libraries
+    if m.lastLoadedItem = m.libraryList.itemFocused then return
+
+    ' Don't change if library navigation is no longer in focus
+    if not m.top.isinFocusChain()
+        return
+    end if
+
+    renderThreadQueue.PostMessage("changeLibrary", m.libraryList.content.getChild(m.libraryList.itemFocused))
+    m.lastLoadedItem = m.libraryList.itemFocused
+end sub
+
+sub processCollapse(expanded as boolean)
+    m.libraryList.itemSize = expanded ? "[300, 50]" : "[60, 50]"
 end sub
 
 sub setActive(value as boolean)
     if isValid(m.libraryList)
         m.libraryList.setfocus(value)
+        processCollapse(value)
     end if
 end sub

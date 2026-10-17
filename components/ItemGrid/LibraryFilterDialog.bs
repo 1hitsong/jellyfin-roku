@@ -198,7 +198,7 @@ sub processTagSearch()
     m.tooManyTagsError = false
     m.tooManyResultsText.visible = false
 
-    filterItem = m.top.options.filter[m.filterMenu.itemFocused]
+    filterItem = m.top.options[m.filterMenu.itemFocused]
 
     dataSource = filterItem.data ?? filterItem.options
 
@@ -268,13 +268,14 @@ sub processTagSearch()
 end sub
 
 sub optionsSet()
+
     ' Filter Tab
-    if isValid(m.top.options.filter)
+    if isValid(m.top.options)
         filterContent = CreateObject("roSGNode", "ContentNode")
         index = 0
         m.selectedFilterIndex = 0
 
-        for each filterItem in m.top.options.filter
+        for each filterItem in m.top.options
             entry = filterContent.CreateChild("OptionNode")
             entry.title = filterItem.Title
             entry.name = filterItem.Name
@@ -417,13 +418,13 @@ function onKeyEvent(key as string, press as boolean) as boolean
         end if
     end if
 
-    if not press then return false
+    if not press then return true
 
     if key = KeyCode.RIGHT
-        if not m.filterMenu.isInFocusChain() then return false
+        if not m.filterMenu.isInFocusChain() then return true
 
         ' Handle Filter screen
-        if not isFilterMenuDataValid() then return false
+        if not isFilterMenuDataValid() then return true
 
         ' If filter has no options, select it
         if m.filterMenu.content.getChild(m.filterMenu.itemFocused).getChildCount() = 0
@@ -447,7 +448,7 @@ function onKeyEvent(key as string, press as boolean) as boolean
 
     if key = KeyCode.DOWN
         if m.tagSearchButton.isInFocusChain()
-            if m.filterOptionsMenu.content.getChildCount() = 0 then return false
+            if m.filterOptionsMenu.content.getChildCount() = 0 then return true
             m.tagSearchButton.focus = false
             m.filterOptionsMenu.setFocus(true)
             return true
@@ -535,7 +536,7 @@ function onKeyEvent(key as string, press as boolean) as boolean
 
         if m.filterMenu.isInFocusChain()
             ' Handle Filter screen
-            if not isFilterMenuDataValid() then return false
+            if not isFilterMenuDataValid() then return true
 
             ' If filter has no options, select it
             if m.filterMenu.content.getChild(m.filterMenu.itemFocused).getChildCount() = 0
@@ -560,9 +561,8 @@ function onKeyEvent(key as string, press as boolean) as boolean
             group.lastFocus = m.filterOptionsMenu
             return true
         end if
-
-        return true
     end if
 
-    return false
+    ' Eat all other key presses
+    return true
 end function

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="LibrarySortDialog" extends="Group">
+  <children>
+    <Rectangle id="overlay" width="1920" height="1080" opacity="0.75" />
+    <Group translation="[100,100]">
+      <Rectangle id="background" width="1720" height="880" />
+      <Text
+        id="headerText"
+        text="TAB_SORT"
+        horizAlign="Left"
+        font="font:LargeSystemFont"
+        height="100"
+        width="1920"
+        translation="[100, 50]" />
+      <Rectangle id="headerBorder" width="1520" height="2" translation="[100, 120]" />
+
+      <LayoutGroup
+        layoutDirection="vert"
+        vertAlignment="left"
+        translation="[100,150]">
+        <LayoutGroup
+          layoutDirection="horiz"
+          horizAlignment="left"
+          itemSpacings="[50]">
+          <LayoutGroup
+            layoutDirection="vert"
+            vertAlignment="left"
+            itemSpacings="[25]">
+            <Text
+              text="SORT BY"
+              width="500" />
+            <RadiobuttonList
+              id="sortFieldMenu"
+              itemSize="[600, 70]"
+              checkOnSelect="true"
+              itemspacing="[0,10]"
+              vertFocusAnimationStyle="floatingFocus"
+              numRows="6"
+              focusFootprintBitmapUri="" />
+          </LayoutGroup>
+
+          <Rectangle
+            id="sectionBorder"
+            height="500"
+            width="2" />
+
+          <LayoutGroup
+            layoutDirection="vert"
+            vertAlignment="left"
+            itemSpacings="[25]">
+            <Text
+              text="SORT DIRECTION"
+              width="500" />
+            <RadiobuttonList
+              id="sortDirectionMenu"
+              itemSize="[600, 70]"
+              checkOnSelect="true"
+              itemspacing="[0,10]"
+              vertFocusAnimationStyle="floatingFocus"
+              numRows="2"
+              focusFootprintBitmapUri="">
+              <ContentNode role="content">
+                <OptionNode title="Ascending" name="ascending" />
+                <OptionNode title="Descending" name="descending" />
+              </ContentNode>
+            </RadiobuttonList>
+          </LayoutGroup>
+        </LayoutGroup>
+
+        <StandardButton
+          id="submitButton"
+          text="OK"
+          height="85"
+          width="660" />
+      </LayoutGroup>
+    </Group>
+  </children>
+  <interface>
+    <field id="options" type="array" onChange="optionsSet" />
+    <field id="field" type="string" value="" />
+    <field id="direction" type="string" value="" />
+  </interface>
+</component>

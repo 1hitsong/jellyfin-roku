@@ -98,7 +98,7 @@
 
   </children>
   <interface>
-    <field id="options" type="assocarray" onChange="optionsSet" />
+    <field id="options" type="array" onChange="optionsSet" />
     <field id="filteredOptions" type="array" />
     <field id="filteredOptionsCheckedState" type="array" />
     <field id="filter" type="string" value="" />

@@ -1,9 +1,10 @@
 import "pkg:/source/enums/TaskControl.bs"
+import "pkg:/source/utils/misc.bs"
 
 sub init()
     m.recentlyAddedList = m.top.findNode("recentlyAddedList")
     m.LoadItemsTask = createObject("roSGNode", "LoadItemsTask")
-    m.LoadItemsTask.observeField("content", "onLoadLibrariesTaskContent")
+    renderThreadQueue.AddMessageHandler("recentlyAddedLoaded", "loadLibrariesMessageHandler")
     m.LoadItemsTask.itemsToLoad = "allRecentlyAdded"
 
     loadItems()
@@ -13,10 +14,8 @@ sub loadItems()
     m.LoadItemsTask.control = TaskControl.RUN
 end sub
 
-sub onLoadLibrariesTaskContent()
-    m.itemData = m.LoadItemsTask.content
-    m.LoadItemsTask.unobserveField("content")
-    m.LoadItemsTask.content = []
+sub loadLibrariesMessageHandler(data, _)
+    m.itemData = data
 
     row = CreateObject("roSGNode", "ContentNode")
     row.appendChildren(m.itemData)

@@ -2,6 +2,18 @@ import "pkg:/source/enums/MediaPlaybackState.bs"
 import "pkg:/source/utils/config.bs"
 import "pkg:/source/utils/parsedUrl.bs"
 
+namespace renderThreadQueue
+    sub AddMessageHandler(messageID as string, handler as string)
+        threadQueue = CreateObject("roRenderThreadQueue")
+        threadQueue.AddMessageHandler(messageID, handler)
+    end sub
+
+    sub PostMessage(messageID as string, data as object)
+        threadQueue = CreateObject("roRenderThreadQueue")
+        threadQueue.PostMessage(messageID, data)
+    end sub
+end namespace
+
 function isNodeEvent(msg, field as string) as boolean
     return type(msg) = "roSGNodeEvent" and msg.getField() = field
 end function
@@ -327,7 +339,7 @@ end function
 function isNumber(input as dynamic) as boolean
     if not isValid(input) then return false
     itemType = type(input)
-    if inArray(["roInt", "Integer"], itemType) then return true
+    if inArray(["roInt", "roInteger", "Integer"], itemType) then return true
     if inArray(["roLongInteger", "LongInteger"], itemType) then return true
     if inArray(["roFloat", "Float"], itemType) then return true
     if inArray(["roDouble", "Double"], itemType) then return true

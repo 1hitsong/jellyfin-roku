@@ -1,0 +1,522 @@
+import "pkg:/source/api/sdk.bs"
+import "pkg:/source/enums/ColorPalette.bs"
+import "pkg:/source/enums/KeyCode.bs"
+import "pkg:/source/enums/PlaybackMethod.bs"
+import "pkg:/source/enums/SettingType.bs"
+import "pkg:/source/enums/String.bs"
+import "pkg:/source/enums/ViewLoadStatus.bs"
+import "pkg:/source/utils/config.bs"
+import "pkg:/source/utils/deviceCapabilities.bs"
+import "pkg:/source/utils/misc.bs"
+
+sub init()
+    m.loadStatus = ViewLoadStatus.INIT
+    m.showSecretMenu = false
+    m.keypresses = []
+    m.magicKeyPressSequence = [KeyCode.UP, KeyCode.LEFT, KeyCode.REPLAY, KeyCode.REWIND, KeyCode.UP, KeyCode.LEFT, KeyCode.REPLAY, KeyCode.REWIND]
+
+    m.userLocation = []
+
+    m.settingsMenu = m.top.findNode("settingsMenu")
+    m.settingsMenu.focusBitmapBlendColor = chainLookupReturn(m.global.session, "user.settings.colorCursor", ColorPalette.HIGHLIGHT)
+    m.settingsMenu.focusFootprintBlendColor = ColorPalette.TRANSPARENT
+    m.settingsMenu.focusedColor = ColorPalette.WHITE
+
+    testRectangle = m.top.findNode("testRectangle")
+    testRectangle.blendColor = ColorPalette.ELEMENTBACKGROUND
+
+    m.settingDesc = m.top.findNode("settingDesc")
+    m.path = m.top.findNode("path")
+
+    m.version = m.top.findNode("version")
+    drawingStyles = {
+        "default": {
+            "fontSize": 27,
+            "fontUri": "font:SystemFontFile",
+            "color": "#EFEFEFFF"
+        },
+        "b": {
+            "fontSize": 27,
+            "fontUri": "font:SystemFontFile",
+            "color": chainLookupReturn(m.global.session, "user.settings.colorCursor", ColorPalette.HIGHLIGHT)
+        }
+    }
+
+    if isValid(m.version)
+        m.version.drawingStyles = drawingStyles
+        m.version.text = `jellyfin ${m.global.app.version} - ${tr("What's New")}?`
+    end if
+
+    m.boolSetting = m.top.findNode("boolSetting")
+    m.integerSetting = m.top.findNode("integerSetting")
+    m.colorgrid = m.top.findNode("colorgrid")
+    m.slider = m.top.findNode("slider")
+
+    m.radioSetting = m.top.findNode("radioSetting")
+    m.radioSetting.focusBitmapBlendColor = chainLookupReturn(m.global.session, "user.settings.colorCursor", ColorPalette.HIGHLIGHT)
+    m.radioSetting.focusFootprintBlendColor = ColorPalette.TRANSPARENT
+    m.radioSetting.focusedColor = ColorPalette.WHITE
+
+    m.integerSetting.observeField("submit", "onKeyGridSubmit")
+    m.integerSetting.observeField("escape", "onKeyGridEscape")
+
+    m.settingsMenu.observeField("itemFocused", "settingFocused")
+    m.settingsMenu.observeField("itemSelected", "settingSelected")
+
+    m.boolSetting.observeField("checkedItem", "boolSettingChanged")
+    m.radioSetting.observeField("checkedItem", "radioSettingChanged")
+    m.colorgrid.observeField("itemSelected", "onColorSelected")
+    m.slider.observeField("value", "onSliderSelected")
+
+    m.postTask = createObject("roSGNode", "PostTask")
+
+    m.keypressTimer = m.top.findNode("keypressTimer")
+    m.keypressTimer.observeField("fire", "onKeypressTimerFire")
+
+    ' Load Configuration Tree
+    m.configTree = GetConfigTree()
+    LoadMenu({ children: m.configTree })
+end sub
+
+sub setActive(value as boolean)
+    if isValid(m.settingsMenu)
+        m.settingsMenu.setfocus(value)
+    end if
+end sub
+
+sub onKeypressTimerFire()
+    m.keypresses.clear()
+end sub
+
+sub onSliderSelected()
+    if not isValid(m.slider.value) then return
+
+    selectedSetting = m.userLocation.peek().children[m.settingsMenu.itemFocused]
+
+    for each option in selectedSetting.options
+        if not isValid(option.data) then continue for
+
+        if isStringEqual(option.value, m.slider.value)
+            set_user_setting(`${selectedSetting.settingName}Data`, option.data)
+            exit for
+        end if
+    end for
+
+    set_user_setting(selectedSetting.settingName, m.slider.value)
+    m.settingsMenu.setFocus(true)
+end sub
+
+sub onColorSelected()
+    selectedColor = m.colorgrid.content.getChild(m.colorgrid.itemSelected).colorCode
+    m.colorgrid.selectedColor = selectedColor
+
+    selectedSetting = m.userLocation.peek().children[m.settingsMenu.itemFocused]
+    set_user_setting(selectedSetting.settingName, selectedColor ?? ColorPalette.VIEWBACKGROUND)
+
+    ' Apply settings to items already loaded so user doesn't need to close the channel to see the changes
+
+    ' Apply global background color
+    if isStringEqual(selectedSetting.settingName, "colorBackground")
+        scene = m.top.getScene()
+        scene.backgroundColor = selectedColor ?? ColorPalette.VIEWBACKGROUND
+    end if
+
+    ' Apply cursor color
+    if isStringEqual(selectedSetting.settingName, "colorCursor")
+        ' Update cursor around user avatar
+        scene = m.top.getScene()
+        overhang = scene.findNode("overhang")
+        if isValid(overhang)
+            overlayCurrentUserSelection = overhang.findNode("overlayCurrentUserSelection")
+            overlayCurrentUserSelection.blendColor = selectedColor ?? ColorPalette.HIGHLIGHT
+        end if
+
+        ' Update setting menu colors
+        m.settingsMenu.focusBitmapBlendColor = selectedColor ?? ColorPalette.HIGHLIGHT
+    end if
+
+    ' Apply cursor color
+    if isStringEqual(selectedSetting.settingName, "colorHomeUsername")
+        ' Update cursor around user avatar
+        scene = m.top.getScene()
+        overhang = scene.findNode("overhang")
+        if isValid(overhang)
+            overlayCurrentUser = overhang.findNode("overlayCurrentUser")
+            overlayCurrentUser.color = selectedColor ?? ColorPalette.WHITE
+        end if
+    end if
+end sub
+
+sub onKeyGridSubmit()
+    selectedSetting = m.userLocation.peek().children[m.settingsMenu.itemFocused]
+    if isValid(selectedSetting.max) and m.integerSetting.text.ToInt() > selectedSetting.max.ToInt()
+        m.integerSetting.text = selectedSetting.max
+        return
+    end if
+    if isValid(selectedSetting.min) and m.integerSetting.text.ToInt() < selectedSetting.min.ToInt()
+        m.integerSetting.text = selectedSetting.min
+        return
+    end if
+    set_user_setting(selectedSetting.settingName, m.integerSetting.text)
+    m.settingsMenu.setFocus(true)
+end sub
+
+sub onKeyGridEscape()
+    if m.integerSetting.escape = "left" or m.integerSetting.escape = "back"
+        m.settingsMenu.setFocus(true)
+    end if
+end sub
+
+sub LoadMenu(configSection, appendPath = true as boolean)
+    if configSection.children = invalid
+        ' Load parent menu
+        m.userLocation.pop()
+        configSection = m.userLocation.peek()
+    else
+        settingsArray = []
+
+        for each item in configSection.children
+            settingsArray.push(item)
+        end for
+
+        configSection.children = settingsArray
+
+        if appendPath
+            if m.userLocation.Count() > 0 then m.userLocation.peek().selectedIndex = m.settingsMenu.itemFocused
+            m.userLocation.push(configSection)
+        end if
+    end if
+
+    result = CreateObject("roSGNode", "ContentNode")
+    m.settingsMenu.content = result
+
+    useWebSectionArrangement = chainLookupReturn(m.global, "session.user.settings.`ui.home.useWebSectionArrangement`", true)
+
+    for each item in configSection.children
+        settingName = chainLookupReturn(item, "settingName", string.EMPTY)
+        if isStringEqual(left(settingName, 17), "homescreensection")
+            item.visible = not useWebSectionArrangement
+        end if
+
+        if isValid(item.visible)
+            if not item.visible
+                if not m.showSecretMenu
+                    continue for
+                end if
+            end if
+        end if
+
+        listItem = result.CreateChild("ContentNode")
+        listItem.title = tr(item.title)
+        listItem.Description = tr(item.description)
+        listItem.id = item.id
+    end for
+
+    if configSection.selectedIndex <> invalid and configSection.selectedIndex > -1
+        m.settingsMenu.jumpToItem = configSection.selectedIndex
+    end if
+
+    ' Set Path display
+    if appendPath
+        m.path.text = UCASE(tr("Settings"))
+        for each level in m.userLocation
+            if level.title <> invalid then m.path.text += " > " + UCase(tr(level.title))
+        end for
+    end if
+
+    if m.loadStatus = ViewLoadStatus.INIT
+        m.loadStatus = ViewLoadStatus.LOADED
+        settingFocused()
+    end if
+end sub
+
+sub settingFocused()
+    itemFocused = m.settingsMenu.itemFocused = -1 ? 0 : m.settingsMenu.itemFocused
+
+    selectedSetting = m.userLocation.peek().children[itemFocused]
+    m.settingDesc.text = tr(selectedSetting.Description)
+
+    ' Hide Settings
+    m.boolSetting.visible = false
+    m.integerSetting.visible = false
+    m.radioSetting.visible = false
+    m.colorgrid.visible = false
+    m.slider.visible = false
+
+    if not isValid(selectedSetting.type) then return
+
+    if isStringEqual(selectedSetting.type, "colorgrid")
+        m.colorgrid.setting = selectedSetting
+        m.colorgrid.visible = true
+        return
+    end if
+
+    if isStringEqual(selectedSetting.type, SettingType.SLIDER)
+        m.slider.value = m.global.session.user.settings[selectedSetting.settingName]
+
+        sliderOptions = []
+        for each item in m.userLocation.peek().children[itemFocused].options
+            sliderOptions.push(item.value)
+        end for
+
+        m.slider.options = sliderOptions
+        m.slider.visible = true
+        return
+    end if
+
+    if isStringEqual(selectedSetting.type, "bool")
+        m.boolSetting.visible = true
+
+        if m.global.session.user.settings[selectedSetting.settingName] = true
+            m.boolSetting.checkedItem = 1
+        else
+            m.boolSetting.checkedItem = 0
+        end if
+
+        return
+    end if
+
+    if isStringEqual(selectedSetting.type, "integer")
+        integerValue = m.global.session.user.settings[selectedSetting.settingName].ToStr()
+        if isValid(integerValue)
+            m.integerSetting.text = integerValue
+        end if
+        m.integerSetting.visible = true
+
+        return
+    end if
+
+    if isStringEqual(selectedSetting.type, "radio")
+        ' Translate user's old setting value to the new value so it doesn't get reset
+        if isStringEqual(selectedSetting.settingName, "playback.media.forceTranscode")
+            originalSelectedValue = m.global.session.user.settings[selectedSetting.settingName]
+
+            if isStringEqual(type(originalSelectedValue), "roBoolean") or isStringEqual(type(originalSelectedValue), "Boolean")
+                convertedValue = originalSelectedValue ? PlaybackMethod.FORCETRANSCODEALLOWREMUX : m.userLocation.peek().children[m.settingsMenu.itemFocused].default
+                set_user_setting(selectedSetting.settingName, convertedValue)
+            end if
+        end if
+
+        selectedValue = m.global.session.user.settings[selectedSetting.settingName]
+
+        radioContent = CreateObject("roSGNode", "ContentNode")
+
+        itemIndex = 0
+        for each item in m.userLocation.peek().children[itemFocused].options
+            listItem = radioContent.CreateChild("ContentNode")
+            listItem.title = tr(item.title)
+            listItem.id = item.id
+            if selectedValue = item.id
+                m.radioSetting.checkedItem = itemIndex
+            end if
+            itemIndex++
+        end for
+
+        m.radioSetting.content = radioContent
+
+        m.radioSetting.visible = true
+
+        return
+    end if
+
+    print `Unknown setting type ${selectedSetting.type}`
+end sub
+
+sub settingSelected()
+    selectedItem = m.userLocation.peek().children[m.settingsMenu.itemFocused]
+
+    if selectedItem.type <> invalid ' Show setting
+        if isStringEqual(selectedItem.type, SettingType.BOOL)
+            m.boolSetting.setFocus(true)
+        end if
+        if isStringEqual(selectedItem.type, SettingType.COLORGRID)
+            m.colorgrid.setFocus(true)
+        end if
+        if isStringEqual(selectedItem.type, SettingType.integer)
+            m.integerSetting.setFocus(true)
+        end if
+        if isStringEqual(selectedItem.type, SettingType.RADIO)
+            m.radioSetting.setFocus(true)
+        end if
+        if isStringEqual(selectedItem.type, SettingType.SLIDER)
+            m.slider.setFocus(true)
+        end if
+    else if selectedItem.children <> invalid and selectedItem.children.Count() > 0 ' Show sub menu
+        LoadMenu(selectedItem)
+        m.settingsMenu.setFocus(true)
+    else
+        return
+    end if
+
+    m.settingDesc.text = m.settingsMenu.content.GetChild(m.settingsMenu.itemFocused).Description
+
+end sub
+
+sub refreshMenu()
+    selectedItem = m.userLocation[m.userLocation.count() - 1]
+    LoadMenu(selectedItem, false)
+end sub
+
+sub boolSettingChanged()
+    if m.boolSetting.focusedChild = invalid then return
+    selectedSetting = m.userLocation.peek().children[m.settingsMenu.itemFocused]
+
+    if m.boolSetting.checkedItem
+        session.user.settings.Save(selectedSetting.settingName, "true")
+        if Left(selectedSetting.settingName, 7) = "global."
+            ' global user setting
+            ' save to main registry block
+            set_setting(selectedSetting.settingName, "true")
+            ' setting specific triggers
+            if selectedSetting.settingName = "global.rememberme"
+                set_setting("active_user", m.global.session.user.id)
+            end if
+        else
+            ' regular user setting
+            ' save to user specific registry block
+            set_user_setting(selectedSetting.settingName, "true")
+        end if
+    else
+        session.user.settings.Save(selectedSetting.settingName, "false")
+        if Left(selectedSetting.settingName, 7) = "global."
+            ' global user setting
+            ' save to main registry block
+            set_setting(selectedSetting.settingName, "false")
+            ' setting specific triggers
+            if selectedSetting.settingName = "global.rememberme"
+                unset_setting("active_user")
+            end if
+        else
+            ' regular user setting
+            ' save to user specific registry block
+            set_user_setting(selectedSetting.settingName, "false")
+        end if
+    end if
+
+    if isStringEqual(selectedSetting.settingName, "ui.home.useWebSectionArrangement")
+        refreshMenu()
+    end if
+end sub
+
+sub radioSettingChanged()
+    if m.radioSetting.focusedChild = invalid then return
+    selectedSetting = m.userLocation.peek().children[m.settingsMenu.itemFocused]
+    set_user_setting(selectedSetting.settingName, m.radioSetting.content.getChild(m.radioSetting.checkedItem).id)
+
+    if isStringEqual(selectedSetting.settingName, "imageBackground")
+        scene = m.top.getScene()
+
+        selectedBackgroundImage = m.radioSetting.content.getChild(m.radioSetting.checkedItem).id
+
+        if isStringEqual(selectedBackgroundImage, "splash")
+            selectedBackgroundImage = api.branding.GetSplashScreen({
+                format: "jpg",
+                foregroundLayer: 1,
+                fillWidth: 1920,
+                width: 1920,
+                fillHeight: 1080,
+                height: 1080,
+                tag: "splash"
+            })
+        end if
+
+        scene.callFunc("setBackgroundImage", selectedBackgroundImage)
+    end if
+
+    if isStringEqual(selectedSetting.settingName, "playback.media.forceTranscode")
+        if isStringEqual(m.radioSetting.content.getChild(m.radioSetting.checkedItem).id, PlaybackMethod.PLAYNORMALLY)
+            m.global.queueManager.callFunc("setForceTranscode", PlaybackMethod.PLAYNORMALLY)
+        end if
+    end if
+end sub
+
+' JFScreen hook that gets ran as needed.
+' Assumes settings were changed and they affect the device profile.
+' Posts a new device profile to the server using the task thread
+sub OnScreenHidden()
+    m.postTask.arrayData = getDeviceCapabilities()
+    m.postTask.apiUrl = "/Sessions/Capabilities/Full"
+    m.postTask.control = "RUN"
+    m.postTask.observeField("responseCode", "postFinished")
+end sub
+
+' Triggered by m.postTask after completing a post.
+' Empty the task data when finished.
+sub postFinished()
+    m.postTask.unobserveField("responseCode")
+    m.postTask.callFunc("empty")
+end sub
+
+' Returns true if any of the data entry forms are in focus
+function isFormInFocus() as boolean
+    if m.radioSetting.hasFocus() or m.boolSetting.hasFocus() or m.integerSetting.hasFocus() or m.colorgrid.hasFocus() or m.slider.hasFocus()
+        return true
+    end if
+    return false
+end function
+
+sub checkMagicKeyPressSequence(key as string)
+    m.keypressTimer.control = "stop"
+    m.keypressTimer.control = "start"
+
+    m.keypresses.push(key)
+
+    if m.keypresses.count() < m.magicKeyPressSequence.count() then return
+
+    for i = 0 to m.keypresses.count()
+        if m.keypresses[i] <> m.magicKeyPressSequence[i] then return
+    end for
+
+    m.showSecretMenu = true
+    LoadMenu({ children: m.configTree })
+end sub
+
+function onKeyEvent(key as string, press as boolean) as boolean
+    if not press then return false
+
+    checkMagicKeyPressSequence(key)
+
+    if (key = "back" or key = "left") and m.settingsMenu.focusedChild <> invalid and m.userLocation.Count() > 1
+        LoadMenu({})
+        return true
+    else if (key = "back" or key = "left") and isFormInFocus()
+        m.settingsMenu.setFocus(true)
+        return true
+    end if
+
+    if isValid(m.version)
+        if isStringEqual(key, KeyCode.DOWN)
+            if m.settingsMenu.hasFocus()
+                m.version.setfocus(true)
+                m.version.text = `jellyfin ${m.global.app.version} - <b>${tr("What's New")}?</b>`
+                return true
+            end if
+        end if
+
+        if m.version.hasFocus()
+            if isStringEqual(key, KeyCode.LEFT)
+                m.version.text = `jellyfin ${m.global.app.version} - ${tr("What's New")}?`
+                return false
+            end if
+
+            if isStringEqual(key, KeyCode.UP)
+                m.settingsMenu.setfocus(true)
+                m.version.text = `jellyfin ${m.global.app.version} - ${tr("What's New")}?`
+                return true
+            end if
+
+            if isStringEqual(key, KeyCode.OK)
+                m.global.sceneManager.callFunc("whatsNewDialog")
+                return true
+            end if
+            return false
+        end if
+    end if
+
+    if key = "right"
+        settingSelected()
+    end if
+
+    return false
+end function
+

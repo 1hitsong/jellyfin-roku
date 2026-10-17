@@ -20,6 +20,10 @@ sub itemContentChanged()
 end sub
 
 sub onItemHasFocusChange()
+    if not m.top.getParent().isinfocusChain()
+        return
+    end if
+
     if m.top.itemHasFocus
         setNodePropertyValue(m.icon, "blendColor", ColorPalette.HIGHLIGHT)
         setNodePropertyValue(m.labelText, "color", ColorPalette.HIGHLIGHT)

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<component name="HomeScreen" extends="HomeSection">
+    <children>
+        <LayoutGroup
+            id="homeContent"
+            translation="[50, 50]"
+            layoutDirection="horiz"
+            horizAlignment="left"
+            itemSpacings="[10]">
+            <Rectangle
+                color="0x00000000"
+                height="970"
+                width="1090">
+                <LibraryItems id="libraryItemsSection" />
+            </Rectangle>
+            <Rectangle
+                color="0x00000000"
+                height="970"
+                width="400">
+                <LayoutGroup
+                    translation="[-35, 0]"
+                    layoutDirection="vert"
+                    vertAlignment="top"
+                    itemSpacings="[40]">
+                    <NewReleases id="newreleasesSection" />
+                    <RecentlyAdded id="recentlyaddedSection" />
+                </LayoutGroup>
+            </Rectangle>
+        </LayoutGroup>
+    </children>
+</component>

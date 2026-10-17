@@ -1,0 +1,358 @@
+import "pkg:/source/enums/CollectionType.bs"
+import "pkg:/source/enums/ColorPalette.bs"
+import "pkg:/source/enums/ItemType.bs"
+import "pkg:/source/enums/KeyCode.bs"
+import "pkg:/source/enums/String.bs"
+import "pkg:/source/utils/misc.bs"
+
+sub init()
+    m.activeButtonIndex = 0
+
+    renderThreadQueue.AddMessageHandler("libraryFilterSortDataLoaded", "libraryFilterSortDataHandler")
+
+    m.filter = m.top.findNode("filter")
+    m.sort = m.top.findNode("sort")
+    m.search = m.top.findNode("search")
+    m.filterDialog = m.top.findNode("filterDialog")
+    m.filterDialog.observeField("visible", "onFilterDialogVisibleChange")
+    m.sortDialog = m.top.findNode("sortDialog")
+    m.sortDialog.observeField("visible", "onSortDialogVisibleChange")
+
+    m.buttons = [m.search, m.filter, m.sort]
+    for each button in m.buttons
+        setDefaultColors(button)
+    end for
+end sub
+
+sub onSortDialogVisibleChange()
+    if m.sortDialog.visible then return
+
+    renderThreadQueue.PostMessage("libraryFilterSort", {
+        sort: {
+            field: m.sortDialog.field,
+            direction: m.sortDialog.direction
+        }
+    })
+end sub
+
+sub onFilterDialogVisibleChange()
+    if m.filterDialog.visible then return
+    renderThreadQueue.PostMessage("libraryFilterSort", {
+        filter: {
+            id: m.filterDialog.filter,
+            options: m.filterDialog.filterOptions ?? {}
+        }
+    })
+end sub
+
+sub setDefaultColors(button as object)
+    if not isValid(button) then return
+    button.background = ColorPalette.TRANSPARENT
+    button.focusBackground = ColorPalette.HIGHLIGHT
+end sub
+
+sub libraryFilterSortDataHandler(data, _)
+    options = filterSortOptions.get()
+
+    ' Add filters from the API data
+    options.filter.push({ "Title": tr("Features"), "Name": "Features", "Options": ["Subtitles", "Special Features", "Theme Song", "Theme Video"], "Delimiter": "|", "CheckedState": [] })
+
+    if isValidAndNotEmpty(data.genres)
+        options.filter.push({ "Title": tr("Genres"), "Name": "Genres", "Options": data.genres, "Delimiter": "|", "CheckedState": [] })
+    end if
+
+    if isValidAndNotEmpty(data.OfficialRatings)
+        options.filter.push({ "Title": tr("Parental Ratings"), "Name": "OfficialRatings", "Options": data.OfficialRatings, "Delimiter": "|", "CheckedState": [] })
+    end if
+
+    if isValidAndNotEmpty(data.Years)
+        options.filter.push({ "Title": tr("Years"), "Name": "Years", "Options": data.Years, "Delimiter": ",", "CheckedState": [] })
+    end if
+
+    if isValidAndNotEmpty(data.Tags)
+        ' If we already have tag filter data, reuse it
+        if isValidAndNotEmpty(m.filterDialog.LookupCI("filteredOptions"))
+            options.filter.push({ "Title": tr("Tags"), "Name": "Tags", "data": data.Tags, "Options": m.filterDialog.LookupCI("filteredOptions"), "Delimiter": "|", "CheckedState": m.filterDialog.LookupCI("filteredOptionsCheckedState") })
+        else
+            options.filter.push({ "Title": tr("Tags"), "Name": "Tags", "Options": data.Tags, "Delimiter": "|", "CheckedState": [] })
+        end if
+    end if
+
+    m.filterDialog.options = options.filter
+    m.sortDialog.options = options.sort
+end sub
+
+sub setActive(value as boolean)
+    if not isNumber(m.activeButtonIndex)
+        m.activeButtonIndex = 0
+    end if
+
+    if value
+        m.buttons[m.activeButtonIndex].focus = true
+        m.buttons[m.activeButtonIndex].setfocus(true)
+        return
+    end if
+
+    m.buttons[m.activeButtonIndex].focus = false
+end sub
+
+function onKeyEvent(key as string, press as boolean) as boolean
+    if not press then return false
+
+    if isStringEqual(key, KeyCode.OK)
+        if m.filter.isinFocusChain()
+            if not m.filter.enabled then return false
+            m.filterDialog.visible = true
+            m.filterDialog.findNode("filterMenu").setFocus(true)
+            return true
+        end if
+
+        if m.sort.isinFocusChain()
+            if not m.sort.enabled then return false
+            m.sortDialog.visible = true
+            m.sortDialog.findNode("sortFieldMenu").setFocus(true)
+            return true
+        end if
+
+        return true
+    end if
+
+    if isStringEqual(key, KeyCode.RIGHT)
+        if m.activeButtonIndex >= m.buttons.count() - 1 then return true
+        setActive(false)
+        m.activeButtonIndex++
+        setActive(true)
+        return true
+    end if
+
+    if isStringEqual(key, KeyCode.LEFT)
+        if m.activeButtonIndex <= 0 then return true
+        setActive(false)
+        m.activeButtonIndex--
+        setActive(true)
+        return true
+    end if
+
+    if isStringEqual(key, KeyCode.DOWN)
+        setActive(false)
+        return false
+    end if
+
+    return false
+end function
+
+namespace filterSortOptions
+    function get() as object
+        if isStringEqual(m.top.mediaType, ItemType.MOVIE)
+            return setMovieOptions()
+        end if
+
+        if isStringEqual(m.top.mediaType, ItemType.BOXSET)
+            return setMovieOptions()
+        end if
+
+        if isStringEqual(m.top.mediaType, ItemType.MYLIST)
+            return setMovieOptions()
+        end if
+
+        if isStringEqual(m.top.mediaType, ItemType.SERIES)
+            return setSeriesOptions()
+        end if
+
+        if isStringEqual(m.top.mediaType, ItemType.MUSICVIDEO)
+            return setMusicVideoOptions()
+        end if
+
+        if inArray([ItemType.PHOTO, ItemType.PHOTOALBUM], m.top.mediaType)
+            return setPhotoOptions()
+        end if
+
+        return {
+            filter: []
+        }
+    end function
+
+    ' Set view, sort, and filter options
+    function setMovieOptions() as object
+        options = {
+            filter: []
+        }
+
+        options.views = [
+            { "Title": tr("Presentation"), "Name": "presentation", "Track": { "description": tr("Presentation") } },
+            { "Title": tr("Grid"), "Name": "grid", "Track": { "description": tr("Grid") } }
+        ]
+
+        if not isStringEqual(m.top.mediaType, ItemType.MYLIST)
+            options.views.push({ "Title": tr("Genres"), "Name": "Genres", "Track": { "description": tr("Genres") } })
+        end if
+
+        options.sort = [
+            { "Title": tr("TITLE"), "Name": "SortName", "Track": { "description": tr("TITLE") } },
+            { "Title": tr("Community Rating"), "Name": "CommunityRating,SortName", "Track": { "description": tr("Community Rating") } },
+            { "Title": tr("Critics Rating"), "Name": "CriticRating,SortName", "Track": { "description": tr("Critics Rating") } },
+            { "Title": tr("DATE_ADDED"), "Name": "DateCreated,SortName", "Track": { "description": tr("DATE_ADDED") } },
+            { "Title": tr("DATE_PLAYED"), "Name": "DatePlayed,SortName", "Track": { "description": tr("DATE_PLAYED") } },
+            { "Title": tr("Parental Rating"), "Name": "OfficialRating,SortName", "Track": { "description": tr("Parental Rating") } },
+            { "Title": tr("PLAY_COUNT"), "Name": "PlayCount,SortName", "Track": { "description": tr("PLAY_COUNT") } },
+            { "Title": tr("RELEASE_DATE"), "Name": "PremiereDate,SortName", "Track": { "description": tr("RELEASE_DATE") } },
+            { "Title": tr("RUNTIME"), "Name": "Runtime,SortName", "Track": { "description": tr("RUNTIME") } },
+            { "Title": tr("Random"), "Name": "Random", "Track": { "description": tr("Random") } }
+        ]
+
+        options.filter = [
+            { "Title": tr("All"), "Name": "All" },
+            { "Title": tr("Played"), "Name": "Played" },
+            { "Title": tr("Unplayed"), "Name": "Unplayed" },
+            { "Title": tr("Resumable"), "Name": "Resumable" },
+            { "Title": tr("Favorites"), "Name": "Favorites" }
+        ]
+
+        if inArray([ItemType.BOXSET, CollectionType.BOXSETS], m.top.collectionType)
+            options.views = [
+                { "Title": tr("Presentation"), "Name": "presentation", "Track": { "description": tr("Presentation") } },
+                { "Title": tr("Grid"), "Name": "grid", "Track": { "description": tr("Grid") } }
+            ]
+        end if
+
+        if inArray([ItemType.MYLIST], m.top.collectionType)
+            options.sort.unshift({ "Title": tr("Order Added"), "Name": "OrderAdded", "Track": { "description": tr("Order Added") } })
+        end if
+
+        if isStringEqual(m.view, "genres")
+            options.sort = [{ "Title": tr("TITLE"), "Name": "SortName", "Track": { "description": tr("TITLE") } }]
+            options.filter = [{ "Title": tr("All"), "Name": "All" }]
+        end if
+
+        ' If we're in a genre subfolder
+        ' if isValid(m.top.parentItem.parentFolder)
+        '     options.views = [
+        '         { "Title": tr("Presentation"), "Name": "presentation", "Track": { "description": tr("Presentation") } },
+        '         { "Title": tr("Grid"), "Name": "grid", "Track": { "description": tr("Grid") } }
+        '     ]
+        ' end if
+
+        return options
+    end function
+
+    function setMusicVideoOptions() as object
+        options = {
+            filter: []
+        }
+
+        options.views = [
+            { "Title": tr("Presentation"), "Name": "presentation", "Track": { "description": tr("Presentation") } },
+            { "Title": tr("Grid"), "Name": "grid", "Track": { "description": tr("Grid") } },
+            { "Title": tr("Genres"), "Name": "Genres", "Track": { "description": tr("Genres") } }
+        ]
+
+        options.sort = [
+            { "Title": tr("TITLE"), "Name": "SortName", "Track": { "description": tr("TITLE") } },
+            { "Title": tr("Community Rating"), "Name": "CommunityRating,SortName", "Track": { "description": tr("Community Rating") } },
+            { "Title": tr("Critics Rating"), "Name": "CriticRating,SortName", "Track": { "description": tr("Critics Rating") } },
+            { "Title": tr("DATE_ADDED"), "Name": "DateCreated,SortName", "Track": { "description": tr("DATE_ADDED") } },
+            { "Title": tr("DATE_PLAYED"), "Name": "DatePlayed,SortName", "Track": { "description": tr("DATE_PLAYED") } },
+            { "Title": tr("Folders"), "Name": "IsFolder,SortName", "Track": { "description": tr("Folders") } },
+            { "Title": tr("Parental Rating"), "Name": "OfficialRating,SortName", "Track": { "description": tr("Parental Rating") } },
+            { "Title": tr("PLAY_COUNT"), "Name": "PlayCount,SortName", "Track": { "description": tr("PLAY_COUNT") } },
+            { "Title": tr("RELEASE_DATE"), "Name": "PremiereDate,SortName", "Track": { "description": tr("RELEASE_DATE") } },
+            { "Title": tr("RUNTIME"), "Name": "Runtime,SortName", "Track": { "description": tr("RUNTIME") } },
+            { "Title": tr("Random"), "Name": "Random", "Track": { "description": tr("Random") } }
+        ]
+
+        options.filter = [
+            { "Title": tr("All"), "Name": "All" },
+            { "Title": tr("Played"), "Name": "Played" },
+            { "Title": tr("Unplayed"), "Name": "Unplayed" },
+            { "Title": tr("Resumable"), "Name": "Resumable" },
+            { "Title": tr("Favorites"), "Name": "Favorites" }
+        ]
+
+        if isStringEqual(m.view, "genres")
+            options.sort = [{ "Title": tr("TITLE"), "Name": "SortName", "Track": { "description": tr("TITLE") } }]
+            options.filter = [{ "Title": tr("All"), "Name": "All" }]
+        end if
+
+        ' If we're in a genre subfolder
+        ' if isValid(m.top.parentItem.parentFolder)
+        '     options.views = [
+        '         { "Title": tr("Presentation"), "Name": "presentation", "Track": { "description": tr("Presentation") } },
+        '         { "Title": tr("Grid"), "Name": "grid", "Track": { "description": tr("Grid") } }
+        '     ]
+        ' end if
+
+        return options
+    end function
+
+    function setPhotoOptions() as object
+        options = {
+            filter: []
+        }
+
+        options.views = [
+            { "Title": tr("Presentation"), "Name": "presentation", "Track": { "description": tr("Presentation") } },
+            { "Title": tr("Grid"), "Name": "grid", "Track": { "description": tr("Grid") } }
+        ]
+
+        options.sort = [
+            { "Title": tr("TITLE"), "Name": "SortName", "Track": { "description": tr("TITLE") } },
+            { "Title": tr("DATE_ADDED"), "Name": "DateCreated,SortName", "Track": { "description": tr("DATE_ADDED") } },
+            { "Title": tr("Folders"), "Name": "IsFolder,SortName", "Track": { "description": tr("Folders") } },
+            { "Title": tr("Random"), "Name": "Random", "Track": { "description": tr("Random") } }
+        ]
+
+        options.filter = [
+            { "Title": tr("All"), "Name": "All" },
+            { "Title": tr("Favorites"), "Name": "Favorites" }
+            { "Title": tr("Item Type"), "Name": "includeItemTypes", "Options": ["Photo", "Photo Album", "Video"], "Delimiter": ",", "CheckedState": [] }
+        ]
+
+        return options
+    end function
+
+    function setSeriesOptions() as object
+        options = {
+            filter: []
+        }
+
+        options.views = [
+            { "Title": tr("Presentation"), "Name": "presentation", "Track": { "description": tr("Presentation") } },
+            { "Title": tr("Grid"), "Name": "grid", "Track": { "description": tr("Grid") } },
+            { "Title": tr("Genres"), "Name": "Genres", "Track": { "description": tr("Genres") } },
+            { "Title": tr("Episodes"), "Name": "Episodes", "Track": { "description": tr("Episodes") } }
+        ]
+
+        options.sort = [
+            { "Title": tr("TITLE"), "Name": "SortName", "Track": { "description": tr("TITLE") } },
+            { "Title": tr("Community Rating"), "Name": "CommunityRating,SortName", "Track": { "description": tr("Community Rating") } },
+            { "Title": tr("Date Show Added"), "Name": "DateCreated,SortName", "Track": { "description": tr("Date Show Added") } },
+            { "Title": tr("Date Episode Added"), "Name": "DateLastContentAdded,SortName", "Track": { "description": tr("Date Episode Added") } },
+            { "Title": tr("DATE_PLAYED"), "Name": "SeriesDatePlayed,SortName", "Track": { "description": tr("DATE_PLAYED") } },
+            { "Title": tr("OFFICIAL_RATING"), "Name": "OfficialRating,SortName", "Track": { "description": tr("OFFICIAL_RATING") } },
+            { "Title": tr("RELEASE_DATE"), "Name": "PremiereDate,SortName", "Track": { "description": tr("RELEASE_DATE") } },
+            { "Title": tr("Random"), "Name": "Random", "Track": { "description": tr("Random") } }
+        ]
+
+        options.filter = [
+            { "Title": tr("All"), "Name": "All" },
+            { "Title": tr("Played"), "Name": "Played" },
+            { "Title": tr("Unplayed"), "Name": "Unplayed" },
+            { "Title": tr("Favorites"), "Name": "Favorites" }
+        ]
+
+        if isStringEqual(m.view, "genres")
+            options.sort = [{ "Title": tr("TITLE"), "Name": "SortName", "Track": { "description": tr("TITLE") } }]
+            options.filter = [{ "Title": tr("All"), "Name": "All" }]
+        end if
+
+        ' If we're in a genre subfolder
+        ' if isValid(m.top.parentItem.parentFolder)
+        '     options.views = [
+        '         { "Title": tr("Presentation"), "Name": "presentation", "Track": { "description": tr("Presentation") } },
+        '         { "Title": tr("Grid"), "Name": "grid", "Track": { "description": tr("Grid") } }
+        '     ]
+        ' end if
+
+        return options
+    end function
+end namespace

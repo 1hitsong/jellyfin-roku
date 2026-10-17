@@ -1,0 +1,139 @@
+import "pkg:/source/enums/AnimationControl.bs"
+import "pkg:/source/enums/AnimationState.bs"
+import "pkg:/source/enums/ColorPalette.bs"
+import "pkg:/source/enums/ItemType.bs"
+import "pkg:/source/enums/KeyCode.bs"
+import "pkg:/source/enums/TaskControl.bs"
+import "pkg:/source/utils/misc.bs"
+
+sub init()
+    overlay = m.top.findNode("overlay")
+    overlay.color = ColorPalette.DARKGREY
+
+    background = m.top.findNode("background")
+    background.color = ColorPalette.ELEMENTBACKGROUND
+
+    headerText = m.top.findNode("headerText")
+    headerText.font.size = 45
+
+    headerBorder = m.top.findNode("headerBorder")
+    headerBorder.color = ColorPalette.LIGHTBLUE
+
+    sectionBorder = m.top.findNode("sectionBorder")
+    sectionBorder.color = ColorPalette.LIGHTBLUE
+
+    m.sortFieldMenu = m.top.findNode("sortFieldMenu")
+    m.sortFieldMenu.focusBitmapBlendColor = chainLookupReturn(m.global.session, "user.settings.colorCursor", ColorPalette.HIGHLIGHT)
+    m.sortFieldMenu.focusFootprintBlendColor = ColorPalette.LIGHTHIGHLIGHT
+    m.sortFieldMenu.focusedColor = ColorPalette.WHITE
+
+    m.sortDirectionMenu = m.top.findNode("sortDirectionMenu")
+    m.sortDirectionMenu.focusBitmapBlendColor = chainLookupReturn(m.global.session, "user.settings.colorCursor", ColorPalette.HIGHLIGHT)
+    m.sortDirectionMenu.focusFootprintBlendColor = ColorPalette.LIGHTHIGHLIGHT
+    m.sortDirectionMenu.focusedColor = ColorPalette.WHITE
+
+    m.submitButton = m.top.findNode("submitButton")
+    m.submitButton.background = ColorPalette.LIGHTBLUE
+    m.submitButton.color = ColorPalette.DARKGREY
+    m.submitButton.focusBackground = chainLookupReturn(m.global.session, "user.settings.colorCursor", ColorPalette.HIGHLIGHT)
+    m.submitButton.focusColor = ColorPalette.WHITE
+
+    m.originalValues = {
+        sort: 0,
+        direction: 0
+    }
+end sub
+
+sub optionsSet()
+    sortContent = CreateObject("roSGNode", "ContentNode")
+    if isValid(m.top.options)
+        index = 0
+        m.selectedFilterIndex = 0
+
+        for each sortItem in m.top.options
+            entry = sortContent.CreateChild("OptionNode")
+            entry.title = sortItem.Title
+            entry.name = sortItem.Name
+
+            if chainLookupReturn(sortItem, "selected", false)
+                m.selectedFilterIndex = index
+            end if
+            index = index + 1
+        end for
+        m.sortFieldMenu.content = sortContent
+        m.sortFieldMenu.checkedItem = m.selectedFilterIndex
+        m.originalValues.sort = m.selectedFilterIndex
+    else
+        entry = sortContent.CreateChild("OptionNode")
+        entry.title = tr("Name")
+        entry.name = LCase(tr("Name"))
+        m.sortFieldMenu.content = sortContent
+        m.sortFieldMenu.checkedItem = 0
+    end if
+
+    m.sortFieldMenu.jumpToItem = m.sortFieldMenu.checkedItem
+    group = m.global.sceneManager.callFunc("getActiveScene")
+    group.lastFocus = m.sortFieldMenu
+end sub
+
+function onKeyEvent(key as string, press as boolean) as boolean
+    if not press then return true
+
+    if isStringEqual(key, KeyCode.RIGHT)
+        if not m.sortFieldMenu.isInFocusChain() then return true
+        m.sortDirectionMenu.setFocus(true)
+        group = m.global.sceneManager.callFunc("getActiveScene")
+        group.lastFocus = m.sortDirectionMenu
+        return true
+    end if
+
+    if isStringEqual(key, KeyCode.Back)
+        m.sortFieldMenu.checkedItem = m.originalValues.sort
+        m.submitButton.focus = false
+        m.top.visible = false
+        m.sortFieldMenu.jumpToItem = m.sortFieldMenu.checkedItem
+        return true
+    end if
+
+    if isStringEqual(key, KeyCode.OK)
+        if m.submitButton.isInFocusChain()
+            m.top.field = m.sortFieldMenu.content.getChild(m.sortFieldMenu.checkedItem = -1 ? 0 : m.sortFieldMenu.checkedItem).name
+            m.top.direction = m.sortDirectionMenu.content.getChild(m.sortDirectionMenu.checkedItem = -1 ? 0 : m.sortDirectionMenu.checkedItem).name
+            m.sortFieldMenu.jumpToItem = m.sortFieldMenu.checkedItem
+            m.originalValues.sort = m.sortFieldMenu.checkedItem
+            m.originalValues.direction = m.sortDirectionMenu.checkedItem
+            m.submitButton.focus = false
+            m.top.visible = false
+            return true
+        end if
+    end if
+
+    if isStringEqual(key, KeyCode.LEFT)
+        ' User wants to escape filter options
+        if m.sortDirectionMenu.isInFocusChain()
+            m.sortFieldMenu.setFocus(true)
+            group = m.global.sceneManager.callFunc("getActiveScene")
+            group.lastFocus = m.sortFieldMenu
+            return true
+        end if
+    end if
+
+    if isStringEqual(key, KeyCode.UP)
+        if m.submitButton.isInFocusChain()
+            m.submitButton.focus = false
+            m.sortFieldMenu.setFocus(true)
+            return true
+        end if
+    end if
+
+    if isStringEqual(key, KeyCode.DOWN)
+        if m.sortFieldMenu.isInFocusChain()
+            m.submitButton.focus = true
+            m.submitButton.setfocus(true)
+            return true
+        end if
+    end if
+
+    ' Eat all other key presses
+    return true
+end function

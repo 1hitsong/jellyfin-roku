@@ -1,25 +1,82 @@
 import "pkg:/source/api/sdk.bs"
 import "pkg:/source/enums/ColorPalette.bs"
 import "pkg:/source/enums/ImageType.bs"
+import "pkg:/source/enums/PosterLoadStatus.bs"
 import "pkg:/source/enums/String.bs"
 import "pkg:/source/utils/misc.bs"
 
 sub init()
-    m.icon = m.top.findNode("icon")
 end sub
 
 sub itemContentChanged()
     itemData = m.top.itemContent
     if not isValid(itemData) then return
 
+    background = m.top.findNode("background")
+    if isValid(background)
+        m.top.removeChild(background)
+    end if
+
+    m.icon = m.top.findNode("icon")
+    m.icon.observeField("loadStatus", "onPosterLoadStatusChanged")
+    if not isValid(m.icon)
+        m.icon = createObject("roSGNode", "Poster")
+        m.icon.translation = "[0,0]"
+        m.icon.id = "icon"
+        m.icon.loadDisplayMode = "scaleToZoom"
+        m.icon.width = "160"
+        m.icon.height = "240"
+        m.top.insertChild(m.icon, 0)
+    end if
+
     m.icon.uri = api.items.GetImageURL(itemData.LookupCI("id"), ImageType.PRIMARY, 0, {
-        fillHeight: 249,
-        fillWidth: 166,
-        quality: 96,
+        fillHeight: 240,
+        fillWidth: 160,
+        quality: 90,
         tag: chainLookupReturn(itemData, "json.imagetags.primary", itemData.LookupCI("id"))
     })
+
+    if not isValidAndNotEmpty(m.icon.uri)
+        showTitleText()
+    end if
 end sub
 
-sub onItemHasFocusChange()
+sub onPosterLoadStatusChanged()
+    if m.icon.loadStatus = PosterLoadStatus.FAILED
+        if m.icon.loadWidth = 0
+            showTitleText()
+        end if
+    end if
+end sub
 
+sub showTitleText()
+    if isValid(m.icon)
+        m.top.removeChild(m.icon)
+    end if
+
+    background = m.top.findNode("background")
+    if not isValid(background)
+        background = createObject("roSGNode", "Rectangle")
+        background.color = ColorPalette.SMOKE
+        background.id = "background"
+        background.width = "160"
+        background.height = "240"
+        m.top.insertChild(background, 0)
+    end if
+
+    title = m.top.findNode("title")
+    if not isValid(title)
+        title = background.createChild("Text")
+        title.font.size = 25
+        title.id = "title"
+        title.width = "150"
+        title.height = "230"
+        title.translation = "[5,5]"
+        title.horizAlign = "center"
+        title.vertAlign = "center"
+        title.ellipsizeOnBoundary = "true"
+        title.wrap = "true"
+    end if
+
+    title.text = m.top.itemContent.title
 end sub

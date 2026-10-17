@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<component name="HomeContent" extends="HomeSection">
+    <children>
+        <LayoutGroup
+            id="homeContent"
+            translation="[50, 50]"
+            layoutDirection="horiz"
+            horizAlignment="left"
+            itemSpacings="[10]">
+            <Group />
+        </LayoutGroup>
+    </children>
+    <interface>
+        <function name="setActive" />
+    </interface>
+</component>

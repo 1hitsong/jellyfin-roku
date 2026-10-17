@@ -34,11 +34,16 @@ sub Main (args as dynamic) as void
 
     overhang = m.scene.findNode("overhang")
 
-    m.global.addFields({ app_loaded: false, playstateTask: playstateTask, sceneManager: sceneManager })
-    m.global.addFields({ queueManager: CreateObject("roSGNode", "QueueManager") })
-    m.global.addFields({ audioPlayer: CreateObject("roSGNode", "AudioPlayer") })
-    m.global.addFields({ jumpTo: {} })
-    m.global.addFields({ fallbackFont: {} })
+    m.global.addFields({
+        app_loaded: false,
+        audioPlayer: CreateObject("roSGNode", "AudioPlayer"),
+        fallbackFont: {},
+        jumpTo: {},
+        playstateTask: playstateTask,
+        queueManager: CreateObject("roSGNode", "QueueManager"),
+        sceneManager: sceneManager
+    })
+
 
     m.global.observeField("jumpTo", m.port)
 

@@ -1,0 +1,168 @@
+import "pkg:/source/enums/ColorPalette.bs"
+import "pkg:/source/enums/KeyCode.bs"
+import "pkg:/source/enums/ResumePopupAction.bs"
+import "pkg:/source/enums/String.bs"
+import "pkg:/source/enums/TaskControl.bs"
+import "pkg:/source/utils/misc.bs"
+
+sub init()
+    m.filterSort = m.top.findNode("filterSort")
+
+    m.libraryTable = m.top.findNode("libraryTable")
+    m.libraryTable.focusBitmapBlendColor = ColorPalette.HIGHLIGHT
+    m.libraryTable.observeFieldScoped("itemFocused", "onItemFocusedChange")
+    m.libraryTable.content = CreateObject("roSGNode", "ContentNode")
+
+    m.loadedLibraryID = string.EMPTY
+    m.libraryItemType = string.EMPTY
+    m.loadedItemCount = 0
+    m.loadItemsTask = createObject("roSGNode", "LoadItemsTask2")
+
+    renderThreadQueue.AddMessageHandler("libraryItemsLoaded", "loadLibrariesMessageHandler")
+    renderThreadQueue.AddMessageHandler("libraryFilterSort", "libraryFilterSortHandler")
+end sub
+
+sub libraryFilterSortHandler(data, _)
+    if isChainValid(data, "sort")
+        selectedSortField = chainLookup(data, "sort.field")
+        selectedSortDirection = isStringEqual(chainLookupReturn(data, "sort.direction", "Ascending"), "Ascending")
+
+        print "selectedSortField", selectedSortField
+        print "selectedSortDirection", selectedSortDirection
+
+        ' Check if nothing changed
+        if isStringEqual(m.loadItemsTask.sortField, selectedSortField)
+            if m.loadItemsTask.sortAscending = selectedSortDirection
+                m.filterSort@.setActive(false)
+                setActive(true)
+                return
+            end if
+        end if
+
+        setLoading(true)
+        m.loadedItemCount = 0
+        m.loadItemsTask.startIndex = 0
+        m.libraryTable.content = CreateObject("roSGNode", "ContentNode")
+        m.loadItemsTask.sortField = selectedSortField
+        m.loadItemsTask.sortAscending = selectedSortDirection
+        m.loadItemsTask.control = TaskControl.RUN
+        m.filterSort@.setActive(false)
+        setActive(true)
+        return
+    end if
+
+    setLoading(true)
+    m.loadedItemCount = 0
+    m.loadItemsTask.startIndex = 0
+    m.libraryTable.content = CreateObject("roSGNode", "ContentNode")
+    m.loadItemsTask.filter = chainLookup(data, "filter.id")
+    m.loadItemsTask.filterOptions = chainLookup(data, "filter.options")
+    m.loadItemsTask.control = TaskControl.RUN
+    m.filterSort@.setActive(false)
+    setActive(true)
+end sub
+
+sub onItemFocusedChange()
+    focusedRow = m.libraryTable.currFocusRow
+
+    if focusedRow >= m.loadedRows - 5 and m.loadedItemCount < m.loadItemsTask.totalRecordCount
+        m.loadItemsTask.startIndex = m.loadedItemCount
+        m.loadItemsTask.control = TaskControl.RUN
+    end if
+
+end sub
+
+sub setLibraryItemType(itemType as string)
+    m.libraryItemType = itemType
+end sub
+
+sub setLibraryData(libraryData as object)
+    m.loadItemsTask.control = TaskControl.STOP
+
+    if not isValidAndNotEmpty(libraryData)
+        setLoading(false)
+    end if
+
+    setLoading(true)
+
+    m.loadedLibraryID = libraryData.LookupCI("id")
+    loadLibraryData(libraryData.LookupCI("id"))
+    m.loadedItemCount = 0
+
+    loadLibraryFilterData(libraryData.LookupCI("id"))
+
+    libraryName = m.top.findNode("libraryName")
+    if isValid(libraryName)
+        libraryName.text = UCase(libraryData.LookupCI("name"))
+    end if
+end sub
+
+sub loadLibraryFilterData(libraryID)
+    print "m.libraryItemType", m.libraryItemType
+    m.filterSort.mediaType = m.libraryItemType
+    m.filterSort.collectionType = getCollectionType()
+
+    m.getFiltersTask = createObject("roSGNode", "GetFiltersTask")
+    m.getFiltersTask.params = {
+        userid: m.global.session.user.id,
+        parentid: libraryID,
+        includeitemtypes: m.libraryItemType
+    }
+    m.getFiltersTask.control = TaskControl.RUN
+end sub
+
+sub loadLibraryData(libraryID)
+    m.loadItemsTask.startIndex = m.loadedItemCount
+    m.loadItemsTask.itemType = m.libraryItemType
+    m.loadItemsTask.itemId = libraryID
+    m.loadItemsTask.control = TaskControl.RUN
+end sub
+
+sub loadLibrariesMessageHandler(libraryData, _)
+    m.libraryTable.content.appendChildren(libraryData)
+    m.loadedItemCount = m.libraryTable.content.getChildCount()
+    m.loadedRows = m.loadedItemCount / m.libraryTable.numColumns
+    setLoading(false)
+end sub
+
+' Return parent collection type
+function getCollectionType() as string
+    return string.EMPTY
+    ' return m.top.parentItem.collectionType ?? m.top.parentItem.Type
+end function
+
+sub setLoading(isLoading as boolean)
+    if isLoading
+        startLoadingSpinner(false)
+        return
+    end if
+
+    stopLoadingSpinner()
+end sub
+
+sub setActive(value as boolean)
+    if isValid(m.libraryTable)
+        m.libraryTable.setfocus(value)
+    end if
+end sub
+
+function onKeyEvent(key as string, press as boolean) as boolean
+    if not press then return false
+
+    if isStringEqual(key, KeyCode.UP)
+        if not m.filterSort.isinfocuschain()
+            m.filterSort@.setActive(true)
+            m.filterSort.setfocus(true)
+            return true
+        end if
+    end if
+
+    if isStringEqual(key, KeyCode.DOWN)
+        if m.filterSort.isinfocuschain()
+            setActive(true)
+            return true
+        end if
+    end if
+
+    return false
+end function
