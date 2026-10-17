@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<component name="RecentlyAdded" extends="HomeSection">
+    <children>
+        <LayoutGroup
+            translation="[0, 0]"
+            layoutDirection="vert"
+            vertAlignment="top"
+            itemSpacings="[10]">
+            <LayoutGroup
+                layoutDirection="horiz"
+                vertAlignment="top"
+                itemSpacings="[0]">
+                <Rectangle color="0x00000000" height="1" width="35" />
+                <HeaderText
+                    text="RECENTLY ADDED"
+                    width="400" />
+            </LayoutGroup>
+            <MarkupList
+                id="recentlyAddedList"
+                itemComponentName="ReleaseItem"
+                drawFocusFeedback="false"
+                focusFootprintBitmapUri=""
+                itemSpacing="[0, 5]"
+                itemSize="[380, 70]"
+                numRows="10"
+                vertFocusAnimationStyle="floatingFocus" />
+        </LayoutGroup>
+    </children>
+</component>

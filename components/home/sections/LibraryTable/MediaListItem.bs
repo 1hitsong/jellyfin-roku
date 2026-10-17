@@ -1,0 +1,25 @@
+import "pkg:/source/api/sdk.bs"
+import "pkg:/source/enums/ColorPalette.bs"
+import "pkg:/source/enums/ImageType.bs"
+import "pkg:/source/enums/String.bs"
+import "pkg:/source/utils/misc.bs"
+
+sub init()
+    m.icon = m.top.findNode("icon")
+end sub
+
+sub itemContentChanged()
+    itemData = m.top.itemContent
+    if not isValid(itemData) then return
+
+    m.icon.uri = api.items.GetImageURL(itemData.LookupCI("id"), ImageType.PRIMARY, 0, {
+        fillHeight: 249,
+        fillWidth: 166,
+        quality: 96,
+        tag: chainLookupReturn(itemData, "json.imagetags.primary", itemData.LookupCI("id"))
+    })
+end sub
+
+sub onItemHasFocusChange()
+
+end sub

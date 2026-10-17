@@ -647,7 +647,10 @@ function CreateHomeGroup()
     group.observeField("quickPlayNode", m.port)
 
     sidepanel = group.findNode("options")
+    if not isValid(sidepanel) then return group
+
     sidepanel.observeField("closeSidePanel", m.port)
+
     new_options = []
     options_buttons = [
         { "title": "Change user", "id": "change_user" },

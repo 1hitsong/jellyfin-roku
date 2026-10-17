@@ -1,0 +1,33 @@
+import "pkg:/source/enums/TaskControl.bs"
+
+sub init()
+    m.recentlyAddedList = m.top.findNode("recentlyAddedList")
+    m.LoadItemsTask = createObject("roSGNode", "LoadItemsTask")
+    m.LoadItemsTask.observeField("content", "onLoadLibrariesTaskContent")
+    m.LoadItemsTask.itemsToLoad = "allRecentlyAdded"
+
+    loadItems()
+end sub
+
+sub loadItems()
+    m.LoadItemsTask.control = TaskControl.RUN
+end sub
+
+sub onLoadLibrariesTaskContent()
+    m.itemData = m.LoadItemsTask.content
+    m.LoadItemsTask.unobserveField("content")
+    m.LoadItemsTask.content = []
+
+    row = CreateObject("roSGNode", "ContentNode")
+    row.appendChildren(m.itemData)
+
+    if isValid(m.recentlyAddedList)
+        m.recentlyAddedList.content = row
+    end if
+end sub
+
+sub setActive(value as boolean)
+    if isValid(m.recentlyAddedList)
+        m.recentlyAddedList.setfocus(value)
+    end if
+end sub

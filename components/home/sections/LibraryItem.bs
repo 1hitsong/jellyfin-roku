@@ -1,0 +1,31 @@
+import "pkg:/source/enums/ColorPalette.bs"
+import "pkg:/source/enums/String.bs"
+import "pkg:/source/utils/misc.bs"
+
+sub init()
+    m.icon = m.top.findNode("icon")
+    m.labelText = m.top.findNode("labelText")
+
+    if isChainValid(m.labelText, "font")
+        m.labelText.font.size = 25
+    end if
+end sub
+
+sub itemContentChanged()
+    itemData = m.top.itemContent
+    if not isValid(itemData) then return
+
+    setNodePropertyValue(m.labelText, "text", itemData.LookupCI("name"))
+    setNodePropertyValue(m.icon, "uri", `pkg:/images/icons/libraries/${itemData.LookupCI("collectiontype")}.png`)
+end sub
+
+sub onItemHasFocusChange()
+    if m.top.itemHasFocus
+        setNodePropertyValue(m.icon, "blendColor", ColorPalette.HIGHLIGHT)
+        setNodePropertyValue(m.labelText, "color", ColorPalette.HIGHLIGHT)
+        return
+    end if
+
+    setNodePropertyValue(m.icon, "blendColor", ColorPalette.WHITE)
+    setNodePropertyValue(m.labelText, "color", ColorPalette.WHITE)
+end sub

@@ -311,6 +311,18 @@ function isValid(input as dynamic) as boolean
     return input <> invalid
 end function
 
+' Set a node property value
+' Returns a flag indicating if successful
+function setNodePropertyValue(node as dynamic, name as string, value as dynamic) as boolean
+    if not isValid(node) then return false
+    try
+        node.AddReplace(name, value)
+        return true
+    catch e
+        return false
+    end try
+end function
+
 ' Returns whether or not passed value is a number
 function isNumber(input as dynamic) as boolean
     if not isValid(input) then return false

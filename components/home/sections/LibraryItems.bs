@@ -1,0 +1,74 @@
+import "pkg:/source/enums/ColorPalette.bs"
+import "pkg:/source/enums/KeyCode.bs"
+import "pkg:/source/enums/ResumePopupAction.bs"
+import "pkg:/source/enums/String.bs"
+import "pkg:/source/enums/TaskControl.bs"
+import "pkg:/source/utils/misc.bs"
+
+sub init()
+    m.libraryTable = m.top.findNode("libraryTable")
+    m.libraryTable.focusBitmapBlendColor = ColorPalette.HIGHLIGHT
+
+    m.loadedLibraryID = string.EMPTY
+    m.loadItemsTask = createObject("roSGNode", "LoadItemsTask2")
+    m.loadItemsTask.observeField("content", "onLoadItemsTaskContentChange")
+end sub
+
+sub setLibraryData(libraryData as object)
+    m.loadItemsTask.control = TaskControl.STOP
+
+    if not isValidAndNotEmpty(libraryData)
+        setLoading(false)
+    end if
+
+    if isStringEqual(libraryData.LookupCI("id"), m.loadedLibraryID)
+        print "Keep loading current Library"
+        return
+    end if
+
+    setLoading(true)
+
+    m.loadedLibraryID = libraryData.LookupCI("id")
+    loadLibraryData(libraryData.LookupCI("id"))
+
+    libraryName = m.top.findNode("libraryName")
+    if isValid(libraryName)
+        libraryName.text = UCase(libraryData.LookupCI("name"))
+    end if
+end sub
+
+sub loadLibraryData(libraryID)
+    ' m.loadItemsTask.startIndex = m.loadedItems
+    m.loadItemsTask.itemId = libraryID
+    m.loadItemsTask.control = TaskControl.RUN
+end sub
+
+sub onLoadItemsTaskContentChange()
+    libraryData = m.loadItemsTask.content
+
+    row = CreateObject("roSGNode", "ContentNode")
+    row.appendChildren(libraryData)
+
+    m.libraryTable.content = row
+    setLoading(false)
+end sub
+
+sub setLoading(isLoading as boolean)
+    if isLoading
+        startLoadingSpinner(false)
+        return
+    end if
+
+    stopLoadingSpinner()
+end sub
+
+sub setActive(value as boolean)
+    if isValid(m.libraryTable)
+        m.libraryTable.setfocus(value)
+    end if
+end sub
+
+function onKeyEvent(key as string, press as boolean) as boolean
+    if not press then return false
+    return false
+end function

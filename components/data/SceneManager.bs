@@ -206,11 +206,6 @@ sub registerOverhangData(group)
         return
     end if
 
-    if group.isSubType("Home")
-        m.overhang.isVisible = true
-        return
-    end if
-
     if group.isSubType("JFGroup")
         if group.overhangTitle <> invalid then m.overhang.title = group.overhangTitle
 

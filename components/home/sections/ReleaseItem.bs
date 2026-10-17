@@ -1,0 +1,48 @@
+import "pkg:/source/api/sdk.bs"
+import "pkg:/source/enums/ColorPalette.bs"
+import "pkg:/source/enums/ImageType.bs"
+import "pkg:/source/enums/String.bs"
+import "pkg:/source/utils/misc.bs"
+
+sub init()
+    m.icon = m.top.findNode("icon")
+    m.labelText = m.top.findNode("labelText")
+    m.subLabelText = m.top.findNode("subLabelText")
+    m.labelText.font.size = 22
+    m.subLabelText.font.size = 18
+end sub
+
+sub itemContentChanged()
+    itemData = m.top.itemContent
+    if not isValid(itemData) then return
+
+    m.labelText.text = itemData.LookupCI("name")
+    m.icon.uri = api.items.GetImageURL(itemData.LookupCI("id"), ImageType.PRIMARY, 0, { "maxHeight": 50, "maxWidth": 50 })
+
+    subtitleText = []
+
+    itemType = itemData.LookupCI("type")
+    if isValidAndNotEmpty(itemType)
+        itemType = itemType.Replace(`MusicAlbum`, `Album`)
+        subtitleText.push(itemType)
+    end if
+
+    if isValidAndNotEmpty(chainLookup(itemData, "json.SeriesName"))
+        subtitleText.push(chainLookup(itemData, "json.SeriesName"))
+    end if
+
+    if isValidAndNotEmpty(chainLookup(itemData, "json.SeasonName"))
+        subtitleText.push(chainLookup(itemData, "json.SeasonName"))
+    end if
+
+    m.subLabelText.text = subtitleText.join(` • `)
+end sub
+
+sub onItemHasFocusChange()
+    if m.top.itemHasFocus
+        m.labelText.color = ColorPalette.HIGHLIGHT
+        return
+    end if
+
+    m.labelText.color = ColorPalette.WHITE
+end sub

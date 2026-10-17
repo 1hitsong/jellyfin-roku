@@ -49,6 +49,61 @@ function loadLibraries() as object
     return results
 end function
 
+function loadRecentlyAddedMedia() as object
+    results = []
+
+    params = {
+        userId: m.global.session.user.id,
+        limit: 5,
+        enableImageTypes: `${ImageType.PRIMARY}`,
+        imageTypeLimit: 1,
+        enableTotalRecordCount: false,
+        includeItemTypes: `${ItemType.MUSICALBUM},${ItemType.MOVIE},${ItemType.EPISODE},${ItemType.VIDEO},${ItemType.AUDIOBOOK},${ItemType.RECORDING}`
+    }
+
+    data = api.items.GetLatest(params)
+
+    if not isValidAndNotEmpty(data) then return results
+
+    for each item in data
+        if not isStringEqual(item.Type, ItemType.BOOK)
+            tmp = CreateObject("roSGNode", "HomeData")
+
+            json = {
+                id: item.LookupCI("Id"),
+                name: item.LookupCI("name"),
+                Type: item.LookupCI("Type"),
+                CollectionType: item.LookupCI("CollectionType"),
+                ChannelName: item.LookupCI("ChannelName"),
+                ChannelId: item.LookupCI("ChannelId"),
+                EpisodeTitle: item.LookupCI("EpisodeTitle"),
+                ChildCount: item.LookupCI("ChildCount"),
+                EndDate: item.LookupCI("EndDate"),
+                OfficialRating: item.LookupCI("OfficialRating"),
+                ProductionYear: item.LookupCI("ProductionYear"),
+                Album: item.LookupCI("Album"),
+                SeriesName: item.LookupCI("SeriesName"),
+                SeriesId: item.LookupCI("SeriesId"),
+                SeasonId: item.LookupCI("SeasonId"),
+                ParentIndexNumber: item.LookupCI("ParentIndexNumber"),
+                IndexNumber: item.LookupCI("IndexNumber"),
+                IndexNumberEnd: item.LookupCI("IndexNumberEnd"),
+                AlbumArtist: item.LookupCI("AlbumArtist"),
+                AlbumArtistId: isValidAndNotEmpty(item.AlbumArtists) ? item.AlbumArtists[0].LookupCI("id") : invalid,
+                Genre: isValidAndNotEmpty(item.GenreItems) ? item.GenreItems : invalid,
+                Status: item.LookupCI("Status"),
+                UserData: item.LookupCI("UserData"),
+                LibraryId: m.top.itemId
+            }
+            json.Append(ItemImageFields(item))
+            tmp.json = json
+            results.push(tmp)
+        end if
+    end for
+
+    return results
+end function
+
 function loadLatestMedia() as object
     results = []
 
@@ -450,6 +505,32 @@ function loadNextUp() as object
     return results
 end function
 
+function loadLatestReleases() as object
+    results = []
+
+    params = {
+        SortBy: "PremiereDate",
+        SortOrder: "Descending",
+        ImageTypeLimit: 1,
+        UserId: m.global.session.user.id,
+        limit: 5,
+        EnableTotalRecordCount: false,
+        excludeItemTypes: `${ItemType.BOOK}, ${ItemType.SEASON}`
+    }
+
+    data = api.items.Get(params)
+
+    if isChainValid(data, "Items")
+        for each item in data.Items
+            tmp = CreateObject("roSGNode", "HomeData")
+            tmp.json = item
+            results.push(tmp)
+        end for
+    end if
+
+    return results
+end function
+
 ' getFavoriteRowDefinitions: Defines the visible Favorites rows and their Jellyfin query type
 '
 function getFavoriteRowDefinitions() as object
@@ -813,6 +894,11 @@ sub loadItems()
         return
     end if
 
+    if isStringEqual(m.top.itemsToLoad, "allRecentlyAdded")
+        m.top.content = loadRecentlyAddedMedia()
+        return
+    end if
+
     if isStringEqual(m.top.itemsToLoad, "continue")
         m.top.content = loadContinueWatching()
         return
@@ -820,6 +906,11 @@ sub loadItems()
 
     if isStringEqual(m.top.itemsToLoad, "nextUp")
         m.top.content = loadNextUp()
+        return
+    end if
+
+    if isStringEqual(m.top.itemsToLoad, "latestReleases")
+        m.top.content = loadLatestReleases()
         return
     end if
 

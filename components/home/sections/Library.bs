@@ -1,0 +1,48 @@
+import "pkg:/source/enums/TaskControl.bs"
+
+sub init()
+    m.libraryList = m.top.findNode("libraryList")
+
+    m.LoadLibrariesTask = createObject("roSGNode", "LoadItemsTask")
+    m.LoadLibrariesTask.observeField("content", "onLoadLibrariesTaskContent")
+
+    m.keypressTimer = m.top.findNode("keypressTimer")
+    m.keypressTimer.observeField("fire", "onKeypressTimerFire")
+
+    loadLibraries()
+end sub
+
+sub loadLibraries()
+    m.LoadLibrariesTask.control = TaskControl.RUN
+end sub
+
+sub onLoadLibrariesTaskContent()
+    m.libraryData = m.LoadLibrariesTask.content
+    m.LoadLibrariesTask.unobserveField("content")
+    m.LoadLibrariesTask.content = []
+
+    row = CreateObject("roSGNode", "ContentNode")
+    row.appendChildren(m.libraryData)
+
+    if isValid(m.libraryList)
+        m.libraryList.content = row
+        m.libraryList.observeField("itemFocused", "onItemFocusedChange")
+    end if
+end sub
+
+sub onItemFocusedChange()
+    stopLoadingSpinner()
+
+    m.keypressTimer.control = "stop"
+    m.keypressTimer.control = "start"
+end sub
+
+sub onKeypressTimerFire()
+    m.top.selectedItem = m.libraryList.content.getChild(m.libraryList.itemFocused)
+end sub
+
+sub setActive(value as boolean)
+    if isValid(m.libraryList)
+        m.libraryList.setfocus(value)
+    end if
+end sub

@@ -1,53 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <component name="Home" extends="JFScreen">
-  <children>
-    <Poster id="backdrop" loadDisplayMode="scaleToZoom" width="1920" height="1200" />
-
-    <LayoutGroup id="buttons" translation="[100, 100]" layoutDirection="horiz" horizAlignment="left" itemSpacings="[25]">
-      <TextButton
-        id="searchButton"
-        iconSide="left"
-        fontSize="25"
-        padding="20"
-        icon="pkg:/images/icons/search-light.png"
-        focusIcon="pkg:/images/icons/search-light.png"
-        text="Search"
-        height="50"
-        width="200" />
-      <TextButton
-        id="settingsButton"
-        iconSide="left"
-        fontSize="25"
-        padding="20"
-        icon="pkg:/images/icons/settings.png"
-        focusIcon="pkg:/images/icons/settings.png"
-        text="Settings"
-        height="50"
-        width="200" />
-    </LayoutGroup>
-
-    <HomeRows
-      id="homeRows"
-      showRowLabel="true"
-      vertFocusAnimationStyle="fixedFocus"
-      rowFocusAnimationStyle="fixedFocusWrap"
-      itemComponentName="HomeItem"
-      numRows="2"
-      rowLabelOffset="[[0,20]]" />
-    <OptionsSlider id="options" />
-
-    <Animation id="toggleButtonsAnimation" duration=".7" repeat="false" easeFunction="linear">
-      <FloatFieldInterpolator id="buttonsFade" key="[0.0, .6]" keyValue="[1.00, 0.00]" fieldToInterp="buttons.opacity" />
-      <Vector2DFieldInterpolator id="buttonsMove" key="[0.1, .9]" keyValue="[[100, 100], [100, 0]]" fieldToInterp="buttons.translation" />
-    </Animation>
-
-  </children>
-  <interface>
-    <field id="playlistData" type="array" />
-    <field id="selectedItem" alias="homeRows.selectedItem" />
-    <field id="rowFocused" alias="homeRows.itemFocused" onchange="onRowFocusedChange" />
-    <field id="quickPlayNode" alias="homeRows.quickPlayNode" />
-    <function name="refresh" />
-    <function name="loadLibraries" />
-  </interface>
+    <children>
+        <LayoutGroup
+            translation="[50, 50]"
+            layoutDirection="horiz"
+            horizAlignment="left"
+            itemSpacings="[10]">
+            <Rectangle
+                color="0x00000000"
+                height="970"
+                width="300">
+                <LayoutGroup
+                    layoutDirection="vert"
+                    vertAlignment="top"
+                    itemSpacings="[10]">
+                    <Library id="librarySection" />
+                </LayoutGroup>
+            </Rectangle>
+            <Rectangle
+                color="0x00000000"
+                height="970"
+                width="1090">
+                <LibraryItems id="libraryItemsSection" />
+            </Rectangle>
+            <Rectangle
+                color="0x00000000"
+                height="970"
+                width="400">
+                <LayoutGroup
+                    translation="[-35, 0]"
+                    layoutDirection="vert"
+                    vertAlignment="top"
+                    itemSpacings="[40]">
+                    <NewReleases id="newreleasesSection" />
+                    <RecentlyAdded id="recentlyaddedSection" />
+                </LayoutGroup>
+            </Rectangle>
+        </LayoutGroup>
+    </children>
+    <interface>
+        <field id="selectedItem" type="node" alwaysNotify="true" />
+    </interface>
 </component>

@@ -1,0 +1,11 @@
+import "pkg:/source/enums/ColorPalette.bs"
+import "pkg:/source/enums/String.bs"
+import "pkg:/source/utils/misc.bs"
+
+sub init()
+    m.top.color = "#CCCCCC"
+    m.top.horizAlign = "left"
+    m.top.font = "font:SmallSystemFont"
+    m.top.font.size = 20
+    m.top.height = "20"
+end sub
