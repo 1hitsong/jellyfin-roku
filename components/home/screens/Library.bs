@@ -23,12 +23,29 @@ sub init()
 end sub
 
 sub libraryFilterSortHandler(data, _)
+    if isChainValid(data, "search")
+        searchTerm = chainLookup(data, "search.term")
+
+        if isStringEqual(m.loadItemsTask.searchTerm, searchTerm)
+            m.filterSort@.setActive(false)
+            setActive(true)
+            return
+        end if
+
+        setLoading(true)
+        m.loadedItemCount = 0
+        m.loadItemsTask.startIndex = 0
+        m.libraryTable.content = CreateObject("roSGNode", "ContentNode")
+        m.loadItemsTask.searchTerm = searchTerm
+        m.loadItemsTask.control = TaskControl.RUN
+        m.filterSort@.setActive(false)
+        setActive(true)
+        return
+    end if
+
     if isChainValid(data, "sort")
         selectedSortField = chainLookup(data, "sort.field")
         selectedSortDirection = isStringEqual(chainLookupReturn(data, "sort.direction", "Ascending"), "Ascending")
-
-        print "selectedSortField", selectedSortField
-        print "selectedSortDirection", selectedSortDirection
 
         ' Check if nothing changed
         if isStringEqual(m.loadItemsTask.sortField, selectedSortField)

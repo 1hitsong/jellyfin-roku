@@ -96,6 +96,41 @@ sub setActive(value as boolean)
     m.buttons[m.activeButtonIndex].focus = false
 end sub
 
+sub ShowKeyboard()
+    dialog = createObject("roSGNode", "StandardKeyboardDialog")
+    dialog.title = tr("Search Library")
+    dialog.buttons = [tr("OK"), tr("Cancel")]
+    dialog.text = m.tagFilter
+
+    palette = createObject("roSGNode", "RSGPalette")
+    palette.colors = { DialogBackgroundColor: ColorPalette.ELEMENTBACKGROUND }
+    dialog.palette = palette
+
+    m.top.getscene().dialog = dialog
+    m.dialog = dialog
+
+    dialog.observeFieldScoped("buttonSelected", "onDialogButton")
+end sub
+
+sub onDialogButton()
+    d = m.dialog
+    button_text = d.buttons[d.buttonSelected]
+
+    if button_text = tr("OK")
+        processSearch(d.text)
+    end if
+
+    m.dialog.close = true
+end sub
+
+sub processSearch(searchTerm as string)
+    renderThreadQueue.PostMessage("libraryFilterSort", {
+        search: {
+            term: searchTerm
+        }
+    })
+end sub
+
 function onKeyEvent(key as string, press as boolean) as boolean
     if not press then return false
 
@@ -111,6 +146,12 @@ function onKeyEvent(key as string, press as boolean) as boolean
             if not m.sort.enabled then return false
             m.sortDialog.visible = true
             m.sortDialog.findNode("sortFieldMenu").setFocus(true)
+            return true
+        end if
+
+        if m.search.isinFocusChain()
+            if not m.search.enabled then return false
+            showKeyboard()
             return true
         end if
 
