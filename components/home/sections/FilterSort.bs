@@ -37,11 +37,16 @@ end sub
 
 sub onFilterDialogVisibleChange()
     if m.filterDialog.visible then return
-    renderThreadQueue.PostMessage("libraryFilterSort", {
-        filter: {
+
+    m.top.activeFilters = [
+        {
             id: m.filterDialog.filter,
             options: m.filterDialog.filterOptions ?? {}
         }
+    ]
+
+    renderThreadQueue.PostMessage("libraryFilterSort", {
+        filter: m.top.activeFilters
     })
 end sub
 
@@ -100,7 +105,7 @@ sub ShowKeyboard()
     dialog = createObject("roSGNode", "StandardKeyboardDialog")
     dialog.title = tr("Search Library")
     dialog.buttons = [tr("OK"), tr("Cancel")]
-    dialog.text = m.tagFilter
+    dialog.text = m.top.searchTerm
 
     palette = createObject("roSGNode", "RSGPalette")
     palette.colors = { DialogBackgroundColor: ColorPalette.ELEMENTBACKGROUND }
@@ -124,6 +129,8 @@ sub onDialogButton()
 end sub
 
 sub processSearch(searchTerm as string)
+    m.top.searchTerm = searchTerm
+
     renderThreadQueue.PostMessage("libraryFilterSort", {
         search: {
             term: searchTerm

@@ -247,6 +247,10 @@ sub loadItems()
     if filter <> "features"
         if isValid(m.top.filterOptions)
             if m.top.filterOptions.count() > 0
+
+                print "filter", filter
+                print "m.top.filterOptions", m.top.filterOptions
+
                 params.append(m.top.filterOptions)
             end if
         end if

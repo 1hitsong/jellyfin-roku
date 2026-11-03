@@ -11,6 +11,7 @@ sub init()
     m.libraryTable = m.top.findNode("libraryTable")
     m.libraryTable.focusBitmapBlendColor = ColorPalette.HIGHLIGHT
     m.libraryTable.observeFieldScoped("itemFocused", "onItemFocusedChange")
+    m.libraryTable.observeFieldScoped("jumpToFilterSort", "onJumpToFilterSortChange")
     m.libraryTable.content = CreateObject("roSGNode", "ContentNode")
 
     m.loadedLibraryID = string.EMPTY
@@ -20,6 +21,11 @@ sub init()
 
     renderThreadQueue.AddMessageHandler("libraryItemsLoaded", "loadLibrariesMessageHandler")
     renderThreadQueue.AddMessageHandler("libraryFilterSort", "libraryFilterSortHandler")
+end sub
+
+sub onJumpToFilterSortChange()
+    m.filterSort@.setActive(true)
+    m.filterSort.setfocus(true)
 end sub
 
 sub libraryFilterSortHandler(data, _)
@@ -68,15 +74,20 @@ sub libraryFilterSortHandler(data, _)
         return
     end if
 
-    setLoading(true)
-    m.loadedItemCount = 0
-    m.loadItemsTask.startIndex = 0
-    m.libraryTable.content = CreateObject("roSGNode", "ContentNode")
-    m.loadItemsTask.filter = chainLookup(data, "filter.id")
-    m.loadItemsTask.filterOptions = chainLookup(data, "filter.options")
-    m.loadItemsTask.control = TaskControl.RUN
-    m.filterSort@.setActive(false)
-    setActive(true)
+    if isChainValid(data, "filter")
+        filter = data.filter
+        if isValidAndNotEmpty(filter)
+            setLoading(true)
+            m.loadedItemCount = 0
+            m.loadItemsTask.startIndex = 0
+            m.libraryTable.content = CreateObject("roSGNode", "ContentNode")
+            m.loadItemsTask.filter = chainLookup(filter[0], "id")
+            m.loadItemsTask.filterOptions = chainLookup(filter[0], "options")
+            m.loadItemsTask.control = TaskControl.RUN
+        end if
+        m.filterSort@.setActive(false)
+        setActive(true)
+    end if
 end sub
 
 sub onItemFocusedChange()
@@ -168,8 +179,7 @@ function onKeyEvent(key as string, press as boolean) as boolean
 
     if isStringEqual(key, KeyCode.UP)
         if not m.filterSort.isinfocuschain()
-            m.filterSort@.setActive(true)
-            m.filterSort.setfocus(true)
+            onJumpToFilterSortChange()
             return true
         end if
     end if

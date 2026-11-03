@@ -41,7 +41,6 @@ function getHomeSection(rootNode as object) as object
     return rootNode
 end function
 
-
 ' Special handling for key presses on the home screen.
 function onKeyEvent(key as string, press as boolean) as boolean
     if not press then return false
@@ -51,6 +50,9 @@ function onKeyEvent(key as string, press as boolean) as boolean
 
         focusedHomeSection = getHomeSection(m.scene)
         if not isChainValid(focusedHomeSection, "content") then return false
+
+        ' Don't change if user presses enter on library
+        if isStringEqual(chainLookup(focusedHomeSection, "id"), "libraryList") then return true
 
         selectedItem = focusedHomeSection.content.getChild(focusedHomeSection.itemSelected)
         if not isValid(selectedItem) then return false

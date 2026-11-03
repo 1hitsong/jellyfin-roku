@@ -36,6 +36,8 @@ sub onItemFocusedChange()
 end sub
 
 sub onKeypressTimerFire()
+    m.keypressTimer.control = "stop"
+
     ' Don't change if we aren't changing libraries
     if m.lastLoadedItem = m.libraryList.itemFocused then return
 

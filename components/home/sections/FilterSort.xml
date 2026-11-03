@@ -35,6 +35,8 @@
   </children>
   <interface>
     <function name="setActive" />
+    <field id="searchTerm" type="string" />
+    <field id="activeFilters" type="array" />
     <field id="mediaType" type="string" />
     <field id="collectionType" type="string" />
   </interface>

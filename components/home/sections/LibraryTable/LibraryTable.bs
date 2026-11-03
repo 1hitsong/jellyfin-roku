@@ -5,9 +5,30 @@ import "pkg:/source/enums/TaskControl.bs"
 import "pkg:/source/utils/misc.bs"
 
 sub init()
+    m.keydown = false
+    m.longPressTimer = m.top.findNode("longPressTimer")
+    m.longPressTimer.observeField("fire", "onlongPressTimerFire")
+end sub
+
+sub onlongPressTimerFire()
+    m.longPressTimer.control = "stop"
+
+    if m.keydown
+        m.top.jumpToFilterSort = not m.top.jumpToFilterSort
+        return
+    end if
 end sub
 
 function onKeyEvent(key as string, press as boolean) as boolean
+    m.keydown = false
+
     if not press then return false
+
+    if isStringEqual(key, KeyCode.REPLAY)
+        m.keydown = true
+        m.longPressTimer.control = "stop"
+        m.longPressTimer.control = "start"
+    end if
+
     return false
 end function

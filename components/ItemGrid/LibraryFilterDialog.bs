@@ -53,6 +53,8 @@ sub init()
     headerBorder = m.top.findNode("headerBorder")
     headerBorder.color = ColorPalette.LIGHTBLUE
 
+    m.statusFilterMenu = m.top.findNode("statusFilterMenu")
+
     m.filterMenu = m.top.findNode("filterMenu")
     m.filterMenu.focusBitmapBlendColor = chainLookupReturn(m.global.session, "user.settings.colorCursor", ColorPalette.HIGHLIGHT)
     m.filterMenu.focusFootprintBlendColor = ColorPalette.LIGHTHIGHLIGHT
@@ -268,20 +270,28 @@ sub processTagSearch()
 end sub
 
 sub optionsSet()
-
     ' Filter Tab
     if isValid(m.top.options)
+        statusFilterContent = []
         filterContent = CreateObject("roSGNode", "ContentNode")
         index = 0
         m.selectedFilterIndex = 0
 
         for each filterItem in m.top.options
-            entry = filterContent.CreateChild("OptionNode")
-            entry.title = filterItem.Title
-            entry.name = filterItem.Name
-            entry.delimiter = filterItem.Delimiter
+            if not isValid(filterItem.options)
+                entry = CreateObject("roSGNode", "OptionNode")
+                entry.title = filterItem.Title
+                entry.name = filterItem.Name
+                entry.delimiter = filterItem.Delimiter
+                statusFilterContent.push(entry)
+            end if
 
             if isValid(filterItem.options)
+                entry = filterContent.CreateChild("OptionNode")
+                entry.title = filterItem.Title
+                entry.name = filterItem.Name
+                entry.delimiter = filterItem.Delimiter
+
                 if isStringEqual(entry.name, "Tags")
                     filteredTags = []
                     m.noTagsError = false
@@ -321,6 +331,23 @@ sub optionsSet()
             end if
             index = index + 1
         end for
+
+        for each statusFilter in statusFilterContent
+            button = m.statusFilterMenu.CreateChild("TextButton")
+            button.text = statusFilter.title
+            button.id = statusFilter.name
+            button.icon = "pkg:/images/icons/checkboxUnchecked.png"
+            button.iconSide = "left"
+            button.height = "27"
+            button.fontSize = "27"
+            button.width = 50 + (button.text.len() * 20)
+            button.padding = "0"
+            button.textColor = ColorPalette.WHITE
+            button.background = ColorPalette.TRANSPARENT
+            button.focusTextColor = ColorPalette.HIGHLIGHT
+            button.focusBackground = ColorPalette.TRANSPARENT
+        end for
+
         m.filterMenu.content = filterContent
         m.filterMenu.checkedItem = m.selectedFilterIndex
     else

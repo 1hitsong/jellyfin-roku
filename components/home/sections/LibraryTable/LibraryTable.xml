@@ -1,3 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <component name="LibraryTable" extends="MarkupGrid">
+    <children>
+        <Timer id="longPressTimer" duration="1" />
+    </children>
+    <interface>
+        <field id="jumpToFilterSort" type="bool" alwaysNotify="true" />
+    </interface>
 </component>
